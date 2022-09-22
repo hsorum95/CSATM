@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ---
+Metadata: 
+
+Parameters: 
+
+Mappings: 
+
+Conditions: 
+
+Resources:  
+  PharmacyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: --.--.--.--/--
+      EnableDnsSupport: true
+      Tags:
+        - Key: keyname
+          Value: value
+
+  publicSubAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: zone-id
+      VpcId: vpc-id
+      CidrBlock: --.--.--.--/--
+      Tags:
+        - Key: trustzone
+          Value: value
+
+  publicSubAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: zone-id
+      VpcId: vpc-id
+      CidrBlock: --.--.--.--/--
+      Tags:
+        - Key: trustzone
+          Value: value
+
+  privateSubFEAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: zone-id
+      VpcId: vpc-id
+      CidrBlock: --.--.--.--/--
+      Tags:
+        - Key: trustzone
+          Value: value
+
+    privateSubFEAz2:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: zone-id
+        VpcId: vpc-id
+        CidrBlock: --.--.--.--/--
+        Tags:
+          - Key: trustzone
+            Value: value
+
+    privateSubBEAz1:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: zone-id
+        VpcId: vpc-id
+        CidrBlock: --.--.--.--/--
+        Tags:
+          - Key: trustzone
+            Value: value
+
+    privateSubBEAz2:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: zone-id
+        VpcId: vpc-id
+        CidrBlock: --.--.--.--/--
+        Tags:
+          - Key: keyname
+            Value: value
+
+    privateSubDB1:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: zone-id
+        VpcId: vpc-id
+        CidrBlock: --.--.--.--/--
+        Tags:
+          - Key: keyname
+            Value: value
+
+    privateSubDB2:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: zone-id
+        VpcId: vpc-id
+        CidrBlock: --.--.--.--/--
+        Tags:
+          - Key: keyname
+            Value: value
+    
+    frontEndSG:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: 
+        GroupDescription: 
+        VpcId:
+        SecurityGroupIngress:
+          - Security Group Rule
+        SecurityGroupEgress:
+          - Security Group Rule
+        Tags:
+          - Key:
+            Value:
+    
+    backEndSG:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: 
+        GroupDescription: 
+        VpcId:
+        SecurityGroupIngress:
+          - Security Group Rule
+        SecurityGroupEgress:
+          - Security Group Rule
+        Tags:
+          - Key:
+            Value:
+    
+    publicALB:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+      Properties: 
+        IpAddressType: ipv4
+        Name: publicRequestLoadbalancing
+        Scheme: String
+        SecurityGroups: 
+          - String
+        SubnetMappings: 
+          - SubnetMapping
+        Subnets: 
+          - String
+        Tags: 
+          - Tag
+        Type: String
+      
