@@ -23,8 +23,10 @@ Parameters:
     Default: 'eu-west-1a'
   AvailabilityZoneTwo:
     Description: AZ we use for all network related named Two
-    Default: 'eu-west-2a'
+    Default: 'eu-west-1b'
     Type: String
+
+
 
 Resources:  
   PharmacyVPC:
@@ -54,7 +56,6 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneOne
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.1.0/28
-
       Tags:
         - Key: trustzone
           Value: value
@@ -137,8 +138,12 @@ Resources:
       VpcId: !Ref PharmacyVPC
       SecurityGroupIngress:
         - IpProtocol: TCP
-          FromPort: 443
-          ToPort: 443
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref HttpsLocation
+        - IpProtocol: TCP
+          FromPort: 22
+          ToPort: 22
           CidrIp: !Ref HttpsLocation
 
 
@@ -150,8 +155,12 @@ Resources:
       VpcId: !Ref PharmacyVPC
       SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref externalALBSG
-          FromPort: 443
-          ToPort: 443
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: TCP
+        - SourceSecurityGroupId: !Ref externalALBSG
+          FromPort: 22
+          ToPort: 22
           IpProtocol: TCP
       
   FrontEndEgress:
@@ -159,7 +168,7 @@ Resources:
     Properties: 
           GroupId: !Ref frontEndSG
           DestinationSecurityGroupId: !Ref internalALBSG
-          FromPort: 443
+          FromPort: 443 #To not waste time with certificates on the ALB
           ToPort: 443
           IpProtocol: TCP
 
@@ -180,7 +189,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupEgress    
     Properties: 
           GroupId: !Ref internalALBSG
-          DestinationSecurityGroupId: !Ref backEndASG
+          DestinationSecurityGroupId: !Ref backEndSG
           FromPort: 443
           ToPort: 443
           IpProtocol: TCP
@@ -222,7 +231,6 @@ Resources:
   publicALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
-      IpAddressType: ipv4
       Name: publicRequestLoadbalancing
       Scheme: internet-facing
       SecurityGroups: 
@@ -230,54 +238,87 @@ Resources:
       Subnets: 
         - !Ref publicSubAz1
         - !Ref publicSubAz2
-      Tags: 
-        - Tag
-      Type: String
-    
+      Type: 'application'
+
+  ListnerPublicALB:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref publicALB
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+       - Type: forward
+         TargetGroupArn: !Ref TargetGroupFEALB
+
+  TargetGroupFEALB:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      VpcId: !Ref PharmacyVPC
+      Protocol: HTTP
+ 
   frontEndLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateName: !Sub ${AWS::StackName}-front-end-launch-template
       LaunchTemplateData: 
-        ImageID: !Ref LatestAmiId
         InstanceType: !Ref InstanceType
+        ImageId: "ami-0ea0f26a6d50850c5"
+        KeyName: ec2keyz
+        SecurityGroupIds:
+          - !Ref frontEndSG
+        UserData: 
+          Fn::Base64: |
+            #!/bin/bash
+            yum update -y
+            yum install -y httpd
+            systemctl start httpd
+            systemctl enable httpd
+            echo "<h1>Hello from Region Eu-west-1</h1>" > /var/www/html/index.html
 
   backEndLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateName: !Sub ${AWS::StackName}-back-end-launch-template
       LaunchTemplateData: 
-        ImageID: !Ref LatestAmiId
+        ImageId: "ami-0ea0f26a6d50850c5"
         InstanceType: !Ref InstanceType
+        KeyName: ec2keyz
+        SecurityGroupIds:
+          - !Ref backEndSG
+
     
   frontEndASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AvailabilityZones: !GetAZs ''
+      VPCZoneIdentifier:
+        - !Ref privateSubFEAz1
+        - !Ref privateSubFEAz2
+      AvailabilityZones:
+        - !Ref AvailabilityZoneOne
+        - !Ref AvailabilityZoneTwo
       LaunchTemplate:
           LaunchTemplateId: !Ref frontEndLaunchTemplate
-          Version: !GetATT frontEndLaunchTemplate.LatestVersionNumber
+          Version: !GetAtt frontEndLaunchTemplate.LatestVersionNumber
+      TargetGroupARNs: 
+        - !Ref TargetGroupFEALB
       MaxSize: '4'
       MinSize: '2'
       DesiredCapacity: '2'
-      Tags:
-          - Key: keyname
-            Value: value
-            PropagateAtLaunch: True|False  
+
     
   backEndASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AvailabilityZones: !GetAZs ''
+      VPCZoneIdentifier:
+        - !Ref privateSubBEAz1
+        - !Ref privateSubBEAz2
+      AvailabilityZones:
+        - !Ref AvailabilityZoneOne
+        - !Ref AvailabilityZoneTwo
       LaunchTemplate: 
         LaunchTemplateId: !Ref backEndLaunchTemplate
-        Version: !GetATT backEndLaunchTemplate.LatestVersionNumber
+        Version: !GetAtt backEndLaunchTemplate.LatestVersionNumber
       MaxSize: '4'
       MinSize: '2'
       DesiredCapacity: '2'
-      Tags:
-        - Key: keyname
-          Value: value
-          PropagateAtLaunch: True|False
-    
-    
