@@ -224,13 +224,12 @@ Resources:
     Properties: 
       IpAddressType: ipv4
       Name: publicRequestLoadbalancing
-      Scheme: String
+      Scheme: internet-facing
       SecurityGroups: 
-        - String
-      SubnetMappings: 
-        - SubnetMapping
+        - !GetAtt externalALBSG.GroupId
       Subnets: 
-        - String
+        - !Ref publicSubAz1
+        - !Ref publicSubAz2
       Tags: 
         - Tag
       Type: String
