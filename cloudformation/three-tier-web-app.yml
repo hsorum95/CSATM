@@ -38,17 +38,54 @@ Resources:
         - Key: keyname
           Value: value
 
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref PharmacyVPC
+      
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref internetGW
+
+  NatRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref PharmacyVPC
+
+  NatPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
   internetGW:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: keyname
           Value: value
+
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref PharmacyVPC
       InternetGatewayId: !Ref internetGW
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref publicSubAz1
+      AllocationId: !GetAtt NatEIP.AllocationId
+
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
 
   publicSubAz1:
     Type: AWS::EC2::Subnet
@@ -56,9 +93,16 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneOne
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.1.0/28
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: trustzone
           Value: value
+
+  PublicSubAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref publicSubAz1
 
   publicSubAz2:
     Type: AWS::EC2::Subnet
@@ -66,9 +110,17 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneTwo
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.2.0/28
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: trustzone
           Value: value
+  
+  PublicSubAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref publicSubAz2
+
 
   privateSubFEAz1:
     Type: AWS::EC2::Subnet
@@ -80,6 +132,12 @@ Resources:
           - Key: trustzone
             Value: value
 
+  PrivateSubAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      SubnetId: !Ref privateSubFEAz1
+
   privateSubFEAz2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -89,6 +147,12 @@ Resources:
       Tags:
           - Key: trustzone
             Value: value
+
+  PrivateSubAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      SubnetId: !Ref privateSubFEAz2
 
   privateSubBEAz1:
     Type: AWS::EC2::Subnet
@@ -142,9 +206,37 @@ Resources:
           ToPort: 80
           CidrIp: !Ref HttpsLocation
         - IpProtocol: TCP
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref HttpsLocation
+        - IpProtocol: TCP
           FromPort: 22
           ToPort: 22
-          CidrIp: !Ref HttpsLocation
+          CidrIp: 84.212.102.179/24
+  externalALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref externalALBSG
+      DestinationSecurityGroupId: !Ref frontEndSG
+      FromPort: 22
+      ToPort: 22
+      IpProtocol: TCP
+  httpoutALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref externalALBSG
+      CidrIp: !Ref HttpsLocation
+      FromPort: 80
+      ToPort: 80
+      IpProtocol: TCP
+  httpsoutALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref externalALBSG
+      CidrIp: !Ref HttpsLocation
+      FromPort: 443
+      ToPort: 443
+      IpProtocol: TCP
 
 
   frontEndSG:
@@ -169,6 +261,15 @@ Resources:
           GroupId: !Ref frontEndSG
           DestinationSecurityGroupId: !Ref internalALBSG
           FromPort: 443 #To not waste time with certificates on the ALB
+          ToPort: 443
+          IpProtocol: TCP
+
+  FrontEndEgressUpdates:
+    Type: AWS::EC2::SecurityGroupEgress    
+    Properties: 
+          GroupId: !Ref frontEndSG
+          CidrIp: !Ref HttpsLocation
+          FromPort: 80 #To not waste time with certificates on the ALB
           ToPort: 443
           IpProtocol: TCP
 
@@ -256,6 +357,36 @@ Resources:
       Port: 80
       VpcId: !Ref PharmacyVPC
       Protocol: HTTP
+
+
+  internalALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      Name: internalRequestLoadbalancing
+      Scheme: internal 
+      SecurityGroups: 
+        - !GetAtt internalALBSG.GroupId
+      Subnets: 
+        - !Ref privateSubBEAz1
+        - !Ref privateSubBEAz2
+      Type: 'application'
+
+  ListnerInternalALB:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref internalALB
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+       - Type: forward
+         TargetGroupArn: !Ref TargetGroupBEALB
+
+  TargetGroupBEALB:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      VpcId: !Ref PharmacyVPC
+      Protocol: HTTP
  
   frontEndLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -319,6 +450,27 @@ Resources:
       LaunchTemplate: 
         LaunchTemplateId: !Ref backEndLaunchTemplate
         Version: !GetAtt backEndLaunchTemplate.LatestVersionNumber
+      TargetGroupARNs: 
+        - !Ref TargetGroupBEALB
       MaxSize: '4'
       MinSize: '2'
       DesiredCapacity: '2'
+
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: ec2keyz
+      ImageId: "ami-0ea0f26a6d50850c5"
+      InstanceType: !Ref InstanceType
+      Monitoring: false
+      SubnetId: !Ref publicSubAz1
+      SecurityGroupIds:
+        - !Ref externalALBSG
+      UserData: !Base64 |
+        #!/bin/bash
+        yum update -y
+        yum install -y httpd
+        systemctl start httpd
+        systemctl enable httpd
+        echo "<h1>Hello from Region Eu-west-1</h1>" > /var/www/html/index.html
+      
