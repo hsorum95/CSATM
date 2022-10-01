@@ -1,0 +1,591 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Online Pharamacy infrastructure for Hakon Sorums Master Thesis fall 2022'
+
+
+Parameters: 
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t3.small
+    AllowedValues: [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge, t3.nano, t3.micro, t3.small, t3.medium, t3.large]
+    ConstraintDescription: must be a valid EC2 instance type.
+  HttpsLocation:
+    Description: The IP address range that can be used to access the web-shop
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  AvailabilityZoneOne:
+    Description: AZ we use for all network related named one
+    Type: String
+    Default: 'eu-west-1a'
+  AvailabilityZoneTwo:
+    Description: AZ we use for all network related named Two
+    Default: 'eu-west-1b'
+    Type: String
+  #Database Parameters
+  MasterUsername:
+    Description: Username of DB Admin
+    Type: String
+    Default: rdsroot
+  MasterUsernamePassword:
+    NoEcho: 'true'
+    Type: String
+    Description: Database admin PW
+    MinLength: '12'
+    AllowedPattern: "[a-zA-Z0-9!?]*"
+    ConstraintDescription: Must only contain upper and lowercase letters and numbers
+  MultiAvailabilityZone:
+    Description: Do you want to Enable Multi Availability Zones?
+    Type: String
+    Default: 'true'
+    AllowedValues:
+    - 'true'
+    - 'false'
+  TcpPort:
+    Description: Enter RDS Listening TCP Port number.
+    Type: Number
+    Default: '3306'
+  AllocatedStorage:
+    Default: '15'
+    Description: Enter the size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '6144'
+    ConstraintDescription: Must be between 5-6144
+  SnapshotOnDelete:
+    Description: Do you want to create a Snapshot on instance delete?
+    Type: String
+    Default: 'true'
+    AllowedValues:
+    - 'true'
+    - 'false'
+  DBInstanceType:
+    Description: Select Instance Type.
+    Type: String
+    Default: db.t2.micro
+    ConstraintDescription: Must be a valid EC2 instance type.
+
+Mappings:
+  Settings:
+    MySQL:
+      Engine: MySQL
+      Version: '5.7'
+Conditions:
+  ConfigureSnapshotOnDelete:
+    Fn::Equals:
+    - Ref: SnapshotOnDelete
+    - 'true'
+
+Resources:  
+  PharmacyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: true
+      Tags:
+        - Key: trust-boundary
+          Value: cloud-network
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref PharmacyVPC
+      
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref internetGW
+
+  NatRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref PharmacyVPC
+
+  NatPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  internetGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: keyname
+          Value: value
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref PharmacyVPC
+      InternetGatewayId: !Ref internetGW
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref publicSubAz1
+      AllocationId: !GetAtt NatEIP.AllocationId
+
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  publicSubAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneOne
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.1.0/28
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: trustzone
+          Value: value
+
+  PublicSubAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref publicSubAz1
+
+  publicSubAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneTwo
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.2.0/28
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: trustzone
+          Value: value
+  
+  PublicSubAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref publicSubAz2
+
+
+  privateSubFEAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneOne
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.3.0/28
+      Tags:
+          - Key: trustzone
+            Value: value
+
+  PrivateSubAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      SubnetId: !Ref privateSubFEAz1
+
+  privateSubFEAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneTwo
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.4.0/28
+      Tags:
+          - Key: trustzone
+            Value: value
+
+  PrivateSubAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable
+      SubnetId: !Ref privateSubFEAz2
+
+  privateSubBEAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneOne
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.5.0/28
+      Tags:
+          - Key: trustzone
+            Value: value
+
+  privateSubBEAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneTwo
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.6.0/28
+      Tags:
+        - Key: keyname
+          Value: value
+
+  privateSubDB1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneOne
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.7.0/28
+      Tags:
+        - Key: keyname
+          Value: value
+
+  privateSubDB2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZoneTwo
+      VpcId: !Ref PharmacyVPC
+      CidrBlock: 192.168.8.0/28
+      Tags:
+        - Key: keyname
+          Value: value
+    
+  externalALBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'External-ALB-SG'
+      GroupDescription: 'Allow traffic from the internet to the application'
+      VpcId: !Ref PharmacyVPC
+      SecurityGroupIngress:
+        - IpProtocol: TCP
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref HttpsLocation
+        - IpProtocol: TCP
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref HttpsLocation
+        - IpProtocol: TCP
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 84.212.102.179/24
+  externalALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref externalALBSG
+      DestinationSecurityGroupId: !Ref frontEndSG
+      FromPort: 22
+      ToPort: 22
+      IpProtocol: TCP
+  httpoutALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref externalALBSG
+      CidrIp: !Ref HttpsLocation
+      FromPort: 80
+      ToPort: 80
+      IpProtocol: TCP
+  httpsoutALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref externalALBSG
+      CidrIp: !Ref HttpsLocation
+      FromPort: 443
+      ToPort: 443
+      IpProtocol: TCP
+
+
+  frontEndSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'FrontEnd-SG'
+      GroupDescription: 'Allows traffic from external LB to FrontEnd'
+      VpcId: !Ref PharmacyVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref externalALBSG
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: TCP
+        - SourceSecurityGroupId: !Ref externalALBSG
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: TCP
+      
+  FrontEndEgress:
+    Type: AWS::EC2::SecurityGroupEgress    
+    Properties: 
+          GroupId: !Ref frontEndSG
+          DestinationSecurityGroupId: !Ref internalALBSG
+          FromPort: 443 #To not waste time with certificates on the ALB
+          ToPort: 443
+          IpProtocol: TCP
+
+  FrontEndEgressUpdates:
+    Type: AWS::EC2::SecurityGroupEgress    
+    Properties: 
+          GroupId: !Ref frontEndSG
+          CidrIp: !Ref HttpsLocation
+          FromPort: 80 #To not waste time with certificates on the ALB
+          ToPort: 443
+          IpProtocol: TCP
+
+  internalALBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'Internal-ALB-SG'
+      GroupDescription: 'Allow traffic from frontend to backend'
+      VpcId: !Ref PharmacyVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref frontEndSG
+          IpProtocol: TCP
+          FromPort: 443
+          ToPort: 443
+
+
+  InternalALBEgress:
+    Type: AWS::EC2::SecurityGroupEgress    
+    Properties: 
+          GroupId: !Ref internalALBSG
+          DestinationSecurityGroupId: !Ref backEndSG
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: TCP
+
+  backEndSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'BackEnd-SG'
+      GroupDescription: 'Allows traffic from frontend and to database'
+      VpcId: !Ref PharmacyVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref internalALBSG
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: TCP
+      
+  backEndEgress:
+    Type: AWS::EC2::SecurityGroupEgress    
+    Properties: 
+          GroupId: !Ref backEndSG
+          DestinationSecurityGroupId: !Ref dbSG
+          FromPort: 1443
+          ToPort: 1443
+          IpProtocol: TCP
+
+  dbSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'DataBase-SG'
+      GroupDescription: 'Allows traffic from the backend'
+      VpcId: !Ref PharmacyVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref backEndSG
+          FromPort: 1443
+          ToPort: 1443
+          IpProtocol: TCP
+
+    
+  publicALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      Name: publicRequestLoadbalancing
+      Scheme: internet-facing
+      SecurityGroups: 
+        - !GetAtt externalALBSG.GroupId
+      Subnets: 
+        - !Ref publicSubAz1
+        - !Ref publicSubAz2
+      Type: 'application'
+
+  ListnerPublicALB:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref publicALB
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+       - Type: forward
+         TargetGroupArn: !Ref TargetGroupFEALB
+
+  TargetGroupFEALB:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      VpcId: !Ref PharmacyVPC
+      Protocol: HTTP
+      HealthCheckPath: '/index.html'
+
+  internalALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      Name: internalRequestLoadbalancing
+      Scheme: internal 
+      SecurityGroups: 
+        - !GetAtt internalALBSG.GroupId
+      Subnets: 
+        - !Ref privateSubBEAz1
+        - !Ref privateSubBEAz2
+      Type: 'application'
+
+  ListnerInternalALB:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref internalALB
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+       - Type: forward
+         TargetGroupArn: !Ref TargetGroupBEALB
+
+  TargetGroupBEALB:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      VpcId: !Ref PharmacyVPC
+      Protocol: HTTP
+ 
+  frontEndLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub ${AWS::StackName}-front-end-launch-template
+      LaunchTemplateData: 
+        InstanceType: !Ref InstanceType
+        ImageId: "ami-0ea0f26a6d50850c5"
+        KeyName: ec2keyz
+        SecurityGroupIds:
+          - !Ref frontEndSG
+        UserData: !Base64 |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Pharmacy Front end</h1>" > /var/www/html/index.html
+
+  backEndLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub ${AWS::StackName}-back-end-launch-template
+      LaunchTemplateData: 
+        ImageId: "ami-0ea0f26a6d50850c5"
+        InstanceType: !Ref InstanceType
+        KeyName: ec2keyz
+        SecurityGroupIds:
+          - !Ref backEndSG
+
+    
+  frontEndASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref privateSubFEAz1
+        - !Ref privateSubFEAz2
+      AvailabilityZones:
+        - !Ref AvailabilityZoneOne
+        - !Ref AvailabilityZoneTwo
+      LaunchTemplate:
+          LaunchTemplateId: !Ref frontEndLaunchTemplate
+          Version: !GetAtt frontEndLaunchTemplate.LatestVersionNumber
+      TargetGroupARNs: 
+        - !Ref TargetGroupFEALB
+      MaxSize: '4'
+      MinSize: '2'
+      DesiredCapacity: '2'
+
+    
+  backEndASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref privateSubBEAz1
+        - !Ref privateSubBEAz2
+      AvailabilityZones:
+        - !Ref AvailabilityZoneOne
+        - !Ref AvailabilityZoneTwo
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref backEndLaunchTemplate
+        Version: !GetAtt backEndLaunchTemplate.LatestVersionNumber
+      TargetGroupARNs: 
+        - !Ref TargetGroupBEALB
+      MaxSize: '4'
+      MinSize: '2'
+      DesiredCapacity: '2'
+
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: ec2keyz
+      ImageId: "ami-0ea0f26a6d50850c5"
+      InstanceType: !Ref InstanceType
+      Monitoring: false
+      SubnetId: !Ref publicSubAz1
+      SecurityGroupIds:
+        - !Ref externalALBSG
+      UserData: !Base64 |
+        #!/bin/bash
+        yum update -y
+        yum install -y httpd
+        systemctl start httpd
+        systemctl enable httpd
+        echo "<h1>Pharmacy</h1>" > /var/www/html/index.html
+      
+#Database Configurations
+
+  RDSSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Sec Group for RDS instance
+      VpcId: !Ref PharmacyVPC
+
+
+  DataBaseSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      GroupId: !Ref RDSSG
+      IpProtocol: tcp
+      FromPort: !Ref TcpPort
+      ToPort: !Ref TcpPort
+      SourceSecurityGroupId: !Ref backEndSG
+  
+  # DataBaseSecurityGroupEgress:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties: 
+  #     GroupId: !Ref RDSSG
+  #     IpProtocol: tcp
+  #     FromPort: !Ref TcpPort
+  #     ToPort: !Ref TcpPort
+  #     DestinationSecurityGroupId: !Ref backEndSG
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'RDS Subnet group for Pharmacy' 
+      DBSubnetGroupName: 'pharmacydbsubnetgroup'
+      SubnetIds:
+        - !Ref privateSubDB1
+        - !Ref privateSubDB2
+
+
+  myRDSCluster:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      AllocatedStorage: !Ref AllocatedStorage
+      AllowMajorVersionUpgrade: 'false'
+      DBInstanceClass: !Ref DBInstanceType
+      DBInstanceIdentifier: !Ref AWS::StackName
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      Engine:
+        Fn::FindInMap:
+        - Settings
+        - MySQL
+        - Engine
+      EngineVersion:
+        Fn::FindInMap:
+        - Settings
+        - MySQL
+        - Version
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUsernamePassword
+      MultiAZ: !Ref MultiAvailabilityZone
+      Port: !Ref TcpPort
+      PubliclyAccessible: 'false'
+      StorageEncrypted: 'false'
+      StorageType: gp2
+      VPCSecurityGroups: 
+        - !Ref RDSSG
