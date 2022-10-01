@@ -25,8 +25,58 @@ Parameters:
     Description: AZ we use for all network related named Two
     Default: 'eu-west-1b'
     Type: String
+  #Database Parameters
+  MasterUsername:
+    Description: Username of DB Admin
+    Type: String
+    Default: rdsroot
+  MasterUsernamePassword:
+    NoEcho: 'true'
+    Description: Database admin PW
+    MinLength: '12'
+    AllowedPattern: "[a-zA-Z0-9!?]*"
+    ConstraintDescription: Must only contain upper and lowercase letters and numbers
+  MultiAvailabilityZone:
+    Description: Do you want to Enable Multi Availability Zones?
+    Type: String
+    Default: 'true'
+    AllowedValues:
+    - 'true'
+    - 'false'
+  TcpPort:
+    Description: Enter RDS Listening TCP Port number.
+    Type: Number
+    Default: '3306'
+  AllocatedStorage:
+    Default: '15'
+    Description: Enter the size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '6144'
+    ConstraintDescription: Must be between 5-6144
+  SnapshotOnDelete:
+    Description: Do you want to create a Snapshot on instance delete?
+    Type: String
+    Default: 'true'
+    AllowedValues:
+    - 'true'
+    - 'false'
+  DBInstanceType:
+    Description: Select Instance Type.
+    Type: String
+    Default: db.t2.micro
+    ConstraintDescription: Must be a valid EC2 instance type.
 
-
+Mappings:
+  Settings:
+    MySQL:
+      Engine: MySQL
+      Version: '5.7'
+Conditions:
+  ConfigureSnapshotOnDelete:
+    Fn::Equals:
+    - Ref: SnapshotOnDelete
+    - 'true'
 
 Resources:  
   PharmacyVPC:
@@ -35,8 +85,8 @@ Resources:
       CidrBlock: 192.168.0.0/16
       EnableDnsSupport: true
       Tags:
-        - Key: keyname
-          Value: value
+        - Key: trust-boundary
+          Value: cloud-network
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -472,5 +522,68 @@ Resources:
         yum install -y httpd
         systemctl start httpd
         systemctl enable httpd
-        echo "<h1>Hello from Region Eu-west-1</h1>" > /var/www/html/index.html
+        echo "<h1>Pharmacy</h1>" > /var/www/html/index.html
       
+#Database Configurations
+
+  RDSSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Sec Group for RDS instance
+      VpcId: !Ref PharmacyVPC
+
+
+  DataBaseSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      GroupId: !Ref RDSSG
+      IpProtocol: tcp
+      FromPort: !Ref TcpPort
+      ToPort: !Ref TcpPort
+      SourceSecurityGroupId: !Ref backEndSG
+  
+  # DataBaseSecurityGroupEgress:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties: 
+  #     GroupId: !Ref RDSSG
+  #     IpProtocol: tcp
+  #     FromPort: !Ref TcpPort
+  #     ToPort: !Ref TcpPort
+  #     DestinationSecurityGroupId: !Ref backEndSG
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'RDS Subnet group for Pharmacy' 
+      SubnetIds:
+        - !Ref privateSubDB1
+        - !Ref privateSubDB2
+
+
+  myRDSCluster:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      AllocatedStorage: !Ref AllocatedStorage
+      AllowMajorVersionUpgrade: 'false'
+      DBInstanceClass: !Ref DBInstanceType
+      DBInstanceIdentifier: !Ref AWS::StackName
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      Engine:
+        Fn::FindInMap:
+        - Settings
+        - MySQL
+        - Engine
+      EngineVersion:
+        Fn::FindInMap:
+        - Settings
+        - MySQL
+        - Version
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      MultiAZ: !Ref MultiAvailabilityZone
+      Port: !Ref TcpPort
+      PubliclyAccessible: 'false'
+      StorageEncrypted: 'false'
+      StorageType: gp2
+      VPCSecurityGroups: !Ref RDSSG
