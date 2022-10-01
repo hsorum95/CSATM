@@ -408,7 +408,7 @@ Resources:
       Port: 80
       VpcId: !Ref PharmacyVPC
       Protocol: HTTP
-
+      HealthCheckPath: '/index.html'
 
   internalALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -428,7 +428,6 @@ Resources:
       LoadBalancerArn: !Ref internalALB
       Protocol: HTTP
       Port: 80
-      HealthCheckPath: /index.html
       DefaultActions:
        - Type: forward
          TargetGroupArn: !Ref TargetGroupBEALB
