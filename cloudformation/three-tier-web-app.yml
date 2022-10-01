@@ -32,6 +32,7 @@ Parameters:
     Default: rdsroot
   MasterUsernamePassword:
     NoEcho: 'true'
+    Type: String
     Description: Database admin PW
     MinLength: '12'
     AllowedPattern: "[a-zA-Z0-9!?]*"
@@ -427,6 +428,7 @@ Resources:
       LoadBalancerArn: !Ref internalALB
       Protocol: HTTP
       Port: 80
+      HealthCheckPath: /index.html
       DefaultActions:
        - Type: forward
          TargetGroupArn: !Ref TargetGroupBEALB
@@ -551,10 +553,11 @@ Resources:
   #     ToPort: !Ref TcpPort
   #     DestinationSecurityGroupId: !Ref backEndSG
 
-  DBSubnetGroup:
+  DatabaseSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: 'RDS Subnet group for Pharmacy' 
+      DBSubnetGroupName: 'pharmacydbsubnetgroup'
       SubnetIds:
         - !Ref privateSubDB1
         - !Ref privateSubDB2
@@ -568,7 +571,7 @@ Resources:
       AllowMajorVersionUpgrade: 'false'
       DBInstanceClass: !Ref DBInstanceType
       DBInstanceIdentifier: !Ref AWS::StackName
-      DBSubnetGroupName: !Ref DbSubnetGroup
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
       Engine:
         Fn::FindInMap:
         - Settings
@@ -580,10 +583,11 @@ Resources:
         - MySQL
         - Version
       MasterUsername: !Ref MasterUsername
-      MasterUserPassword: !Ref MasterUserPassword
+      MasterUserPassword: !Ref MasterUsernamePassword
       MultiAZ: !Ref MultiAvailabilityZone
       Port: !Ref TcpPort
       PubliclyAccessible: 'false'
       StorageEncrypted: 'false'
       StorageType: gp2
-      VPCSecurityGroups: !Ref RDSSG
+      VPCSecurityGroups: 
+        - !Ref RDSSG
