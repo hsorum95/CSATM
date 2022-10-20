@@ -589,3 +589,6 @@ Resources:
       StorageType: gp2
       VPCSecurityGroups: 
         - !Ref RDSSG
+      Tags:
+        - Key: trust-boundary
+          Value: internal-cloud-network

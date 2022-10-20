@@ -90,10 +90,24 @@ yaml_dumped_to_dct: dict = get_cloudformationfile()
 
 recources_in_list: list = get_resources(yaml_dumped_to_dct)
 
-for item in recources_in_list:
-    print(item.name)
-    print(item.type)
-    print(item.trust_boundry)
+# for item in recources_in_list:
+#     print(item.name)
+#     print(item.type)
+#     print(item.trust_boundry)
+
+def get_tags(input_dict: dict ):
+    for key in input_dict:
+        if key == 'Resources':
+            for sub_key in input_dict[key]:
+                for sub_sub_key in input_dict[key][sub_key]:
+                    if sub_sub_key == 'Properties':
+                        for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+                            if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+                                print(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key'))
+                                print(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value'))
+
+get_tags(yaml_dumped_to_dct)            
+    
 
 # lst = base['Resources']['PharmacyVPC']['Properties']['Tags']
 # dict = lst[0]
