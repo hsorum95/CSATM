@@ -7,8 +7,8 @@ __pycache__/
 *.so
 
 # dont want dot or png
-.png
-.dot
+*.png
+*.dot
 
 # Distribution / packaging
 .Python
