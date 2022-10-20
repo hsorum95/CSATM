@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# dont want dot or png
+*.png
+*.dot
+
 # Distribution / packaging
 .Python
 build/

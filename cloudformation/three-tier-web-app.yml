@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Online Pharamacy infrastructure for Hakon Sorums Master Thesis fall 2022'
 
 
