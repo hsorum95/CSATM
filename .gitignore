@@ -9,6 +9,7 @@ __pycache__/
 # dont want dot or png
 *.png
 *.dot
+.vscode/
 
 # Distribution / packaging
 .Python
