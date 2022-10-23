@@ -77,25 +77,22 @@ def get_cloudformationfile():
 
 
 def get_resources(input_dict: dict ) -> list:
-    resource_dict = []
+    resource_list = []
     section_id = 'Resources'
     for key in input_dict:
         if key == section_id:
             for sub_key in input_dict[section_id]:
-                tmp = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), "cloudnetwork")
-                resource_dict.append(tmp)
-    return resource_dict
+                tmp = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None')
+                for sub_sub_key in input_dict[key][sub_key]:
+                    if sub_sub_key == 'Properties':
+                        for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+                            if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+                                tmp.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+                resource_list.append(tmp)
+    return resource_list
 
-yaml_dumped_to_dct: dict = get_cloudformationfile()
 
-recources_in_list: list = get_resources(yaml_dumped_to_dct)
-
-# for item in recources_in_list:
-#     print(item.name)
-#     print(item.type)
-#     print(item.trust_boundry)
-
-def get_tags(input_dict: dict ):
+def get_trustboundry(input_dict: dict ) -> str:
     for key in input_dict:
         if key == 'Resources':
             for sub_key in input_dict[key]:
@@ -103,16 +100,5 @@ def get_tags(input_dict: dict ):
                     if sub_sub_key == 'Properties':
                         for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
-                                print(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key'))
-                                print(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value'))
+                                return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
 
-get_tags(yaml_dumped_to_dct)            
-    
-
-# lst = base['Resources']['PharmacyVPC']['Properties']['Tags']
-# dict = lst[0]
-# key = dict.get('Key')
-# value = dict.get('Value')
-# tuple = (key, value)
-#print(tuple)
-#print((base['Resources']['PharmacyVPC']['Properties']['Tags']))
