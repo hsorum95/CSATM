@@ -1,4 +1,3 @@
-import sys
 import ruamel.yaml
 from dataclasses import dataclass
 
@@ -59,7 +58,13 @@ class Resource:
     name: str
     type: str
     trust_boundry: str
+    data_flows: list()
 
+@dataclass
+class DataFlow:
+    source: Resource
+    destination: Resource
+    data_sensitivity: str
 
 ruamel.yaml.add_multi_constructor('', default_constructor, Loader=ruamel.yaml.SafeLoader)
 yaml = ruamel.yaml.YAML(typ='safe', pure=True)
@@ -82,13 +87,21 @@ def get_resources(input_dict: dict ) -> list:
     for key in input_dict:
         if key == section_id:
             for sub_key in input_dict[section_id]:
-                tmp = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None')
+                tmp_resource = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None', [])
                 for sub_sub_key in input_dict[key][sub_key]:
                     if sub_sub_key == 'Properties':
                         for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
-                                tmp.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
-                resource_list.append(tmp)
+                                tmp_resource.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+                            if (sub_sub_sub_key == 'Tags') and len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key]) > 1:
+                                itr = len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key])
+                                if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow':
+                                    df = DataFlow(tmp_resource.name, input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), 'None')
+                                    tmp_resource.data_flows.append(df)
+                                if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow_source':
+                                    df = DataFlow(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), tmp_resource.name, 'None')
+                                    tmp_resource.data_flows.append(df)
+                resource_list.append(tmp_resource)
     return resource_list
 
 
@@ -102,3 +115,8 @@ def get_trustboundry(input_dict: dict ) -> str:
                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
                                 return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
 
+def get_all_keys(input_dict: dict) -> list:
+    test = input_dict.keys()
+    key_list = list(test)
+    return key_list 
+##TODO: create dataflow objects and add them to the resource objects
