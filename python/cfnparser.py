@@ -1,3 +1,4 @@
+from tabnanny import check
 import ruamel.yaml
 from dataclasses import dataclass
 
@@ -83,27 +84,69 @@ def get_cloudformationfile():
 
 def get_resources(input_dict: dict ) -> list:
     resource_list = []
+    keyw = 'Key'
+    valuew = 'Value'
     section_id = 'Resources'
-    for key in input_dict:
-        if key == section_id:
-            for sub_key in input_dict[section_id]:
-                tmp_resource = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None', [])
-                for sub_sub_key in input_dict[key][sub_key]:
-                    if sub_sub_key == 'Properties':
-                        for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
-                            if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
-                                tmp_resource.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
-                            if (sub_sub_sub_key == 'Tags') and len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key]) > 1:
-                                itr = len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key])
-                                if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow':
-                                    df = DataFlow(tmp_resource.name, input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), 'None')
-                                    tmp_resource.data_flows.append(df)
-                                if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow_source':
-                                    df = DataFlow(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), tmp_resource.name, 'None')
-                                    tmp_resource.data_flows.append(df)
-                resource_list.append(tmp_resource)
+    props_keyword = 'Properties'
+    tags_keyword = 'Tags'
+    tb_keyword = 'trust-boundary'
+    df_keyword = 'data_flow'
+    sink_keyword = 'data_flow_sink'
+    source_keyword = 'data_flow_source'
+    if check_keyword(input_dict, section_id):
+        resources_dict = input_dict[section_id]
+        for key in resources_dict:
+            tmp_resource = Resource(key,input_dict[section_id].get(key,{}).get('Type'), 'None', [])
+            resource_dict = resources_dict[key]
+            if check_keyword(resource_dict[props_keyword], tags_keyword):
+                tags_list = resource_dict[props_keyword][tags_keyword]
+                for tag in tags_list:
+                    if tag.get(keyw) == tb_keyword:
+                        tmp_resource.trust_boundry = tag.get(valuew)
+                    if tag.get(keyw) == df_keyword:
+                        df = DataFlow(tmp_resource.name, tag.get(valuew), 'None')
+                        tmp_resource.data_flows.append(df)
+                    if tag.get(keyw) == sink_keyword:
+                        df = DataFlow(tmp_resource.name, tag.get(valuew), 'None')
+                        tmp_resource.data_flows.append(df)
+                    if tag.get(keyw) == source_keyword:
+                        df = DataFlow(tag.get(valuew), tmp_resource.name,  'None')
+                        tmp_resource.data_flows.append(df)
+            resource_list.append(tmp_resource)
+                    
+    # for key in input_dict:
+    #     if key == section_id:
+    #         for sub_key in input_dict[section_id]:
+    #             tmp_resource = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None', [])
+    #             for sub_sub_key in input_dict[key][sub_key]:
+    #                 if sub_sub_key == 'Properties':
+    #                     for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+    #                         if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+    #                             tmp_resource.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+    #                         if (sub_sub_sub_key == 'Tags') and len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key]) > 1:
+    #                             itr = len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key])
+    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow':
+    #                                 df = DataFlow(tmp_resource.name, input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), 'None')
+    #                                 tmp_resource.data_flows.append(df)
+    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow_source':
+    #                                 df = DataFlow(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), tmp_resource.name, 'None')
+    #                                 tmp_resource.data_flows.append(df)
+    #             resource_list.append(tmp_resource)
     return resource_list
 
+def check_keyword(input_dict: dict, keyword: str) -> bool:
+    if keyword in get_all_keys(input_dict):
+      return True
+    elif keyword not in get_all_keys(input_dict):
+        return False
+    else:
+        raise Exception('No resources found with the keyword: ' + keyword)
+
+def get_all_keys(input_dict: dict) -> list:
+    test = input_dict.keys()
+    key_list = list(test)
+    return key_list 
+##TODO: create dataflow objects and add them to the resource objects
 
 def get_trustboundry(input_dict: dict ) -> str:
     for key in input_dict:
@@ -114,9 +157,3 @@ def get_trustboundry(input_dict: dict ) -> str:
                         for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
                                 return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
-
-def get_all_keys(input_dict: dict) -> list:
-    test = input_dict.keys()
-    key_list = list(test)
-    return key_list 
-##TODO: create dataflow objects and add them to the resource objects

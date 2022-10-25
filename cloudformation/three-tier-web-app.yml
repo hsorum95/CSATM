@@ -85,9 +85,6 @@ Resources:
     Properties:
       CidrBlock: 192.168.0.0/16
       EnableDnsSupport: true
-      Tags:
-        - Key: trust-boundary
-          Value: cloud_network
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -395,6 +392,10 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: public_cloud_network
+        - Key: data_flow
+          Value: frontEndASG
+        - Key: data_flow_source
+          Value: Web-Clients
 
   ListnerPublicALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -428,6 +429,10 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: internal_cloud_network
+        - Key: data_flow
+          Value: backEndASG
+        - Key: data_flow_sink
+          Value: ExternalAPI
 
   ListnerInternalALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -496,6 +501,8 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: public_cloud_network
+        - Key: data_flow
+          Value: internalALB
 
     
   backEndASG:
@@ -518,6 +525,8 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: internal_cloud_network
+        - Key: data_flow
+          Value: myRDSCluster
 
   myEC2Instance:
     Type: AWS::EC2::Instance
