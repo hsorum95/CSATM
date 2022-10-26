@@ -1,5 +1,5 @@
-import sys
 import ruamel.yaml
+from dataclasses import dataclass
 
 
 class Generic:
@@ -53,24 +53,128 @@ def default_constructor(constructor, tag_suffix, node):
     state = generic.construct(constructor, node)
     instance.__init__(tag_suffix, state, style=style)
 
+@dataclass
+class Resource:
+    name: str
+    type: str
+    trust_boundry: str
+    data_flows: list()
+
+@dataclass
+class DataFlow:
+    source: Resource
+    destination: Resource
+    data_sensitivity: str
 
 ruamel.yaml.add_multi_constructor('', default_constructor, Loader=ruamel.yaml.SafeLoader)
-
-
 yaml = ruamel.yaml.YAML(typ='safe', pure=True)
 yaml.default_flow_style = False
 yaml.register_class(GenericScalar)
 yaml.register_class(GenericMapping)
 yaml.register_class(GenericSequence)
 
-input_file = input('Where is the cloudformation-template located?')
-with open(input_file, 'r') as stream:
-    raw = stream.read()
+def get_cloudformationfile():
+    input_file = input('Where is the cloudformation-template located?')
+    with open(input_file, 'r') as stream:
+        raw = stream.read()
+    base = yaml.load(raw)
+    return [base, input_file]
 
-base = yaml.load(raw)
-print((base))
-lst = base['Resources']['PharmacyVPC']['Properties']['Tags']
-dict = lst[0]
-print(dict.get('Key'))
-print(dict.get('Value'))
-#print((base['Resources']['PharmacyVPC']['Properties']['Tags']))
+
+def get_resources(input_dict: dict ) -> list:
+    resource_list = []
+    keyw = 'Key'
+    valuew = 'Value'
+    section_id = 'Resources'
+    props_keyword = 'Properties'
+    tags_keyword = 'Tags'
+    tb_keyword = 'trust-boundary'
+    df_keyword = 'data_flow'
+    sink_keyword = 'data_flow_sink'
+    source_keyword = 'data_flow_source'
+    
+    if check_keyword(input_dict, section_id):
+        resources_dict = input_dict[section_id]
+        for key in resources_dict:
+            tmp_resource = Resource(key,input_dict[section_id].get(key,{}).get('Type'), 'None', [])
+            resource_dict = resources_dict[key]
+            if check_keyword(resource_dict[props_keyword], tags_keyword):
+                tags_list = resource_dict[props_keyword][tags_keyword]
+                for tag in tags_list:
+                    if tag.get(keyw) == tb_keyword:
+                        tmp_resource.trust_boundry = tag.get(valuew)
+                    if tag.get(keyw) == df_keyword:
+                        df = DataFlow(tmp_resource.name, tag.get(valuew), 'None')
+                        tmp_resource.data_flows.append(df)
+                    if tag.get(keyw) == sink_keyword:
+                        df = DataFlow(tmp_resource.name, tag.get(valuew), 'None')
+                        tmp_resource.data_flows.append(df)
+                    if tag.get(keyw) == source_keyword:
+                        df = DataFlow(tag.get(valuew), tmp_resource.name,  'None')
+                        tmp_resource.data_flows.append(df)
+            resource_list.append(tmp_resource)
+                    
+    # for key in input_dict:
+    #     if key == section_id:
+    #         for sub_key in input_dict[section_id]:
+    #             tmp_resource = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None', [])
+    #             for sub_sub_key in input_dict[key][sub_key]:
+    #                 if sub_sub_key == 'Properties':
+    #                     for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+    #                         if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+    #                             tmp_resource.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+    #                         if (sub_sub_sub_key == 'Tags') and len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key]) > 1:
+    #                             itr = len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key])
+    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow':
+    #                                 df = DataFlow(tmp_resource.name, input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), 'None')
+    #                                 tmp_resource.data_flows.append(df)
+    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow_source':
+    #                                 df = DataFlow(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), tmp_resource.name, 'None')
+    #                                 tmp_resource.data_flows.append(df)
+    #             resource_list.append(tmp_resource)
+    return resource_list
+
+#Input list of resource objects. Output list of resource objects within trustboundaries
+def get_resources_in_trustboundry(resource_list: list) -> list:
+    formatted_list : list = list()
+    for resource in resource_list:
+        if resource.trust_boundry != 'None':
+            formatted_list.append(resource)
+    return formatted_list
+
+#Input list of resource objects. Create and format txt.file
+def create_resources_file(input: list) -> None:
+    with open('resources.txt', 'w+') as file:
+        for resource in input:
+            file.write(f'Name: {resource.name}\n\tResource-type: {resource.type}\n\tResource-TrustBoundary: {resource.trust_boundry}\n\tDataFlows:\n')
+            if len(resource.data_flows) > 0:
+                for dataflow in resource.data_flows:
+                    file.write(f'\t-   Source: {dataflow.source}\n\t\tDestination: {dataflow.destination}\n\t\tDataSensitivity: {dataflow.data_sensitivity}\n')
+            else: 
+                file.write('\t-   None\n')
+            
+
+#Helper to find if a keyword is used as key in a getKeys on a dict
+def check_keyword(input_dict: dict, keyword: str) -> bool:
+    if keyword in get_all_keys(input_dict):
+      return True
+    elif keyword not in get_all_keys(input_dict):
+        return False
+    else:
+        raise Exception('No resources found with the keyword: ' + keyword)
+
+def get_all_keys(input_dict: dict) -> list:
+    test = input_dict.keys()
+    key_list = list(test)
+    return key_list 
+
+
+# def get_trustboundry(input_dict: dict ) -> str:
+#     for key in input_dict:
+#         if key == 'Resources':
+#             for sub_key in input_dict[key]:
+#                 for sub_sub_key in input_dict[key][sub_key]:
+#                     if sub_sub_key == 'Properties':
+#                         for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+#                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+#                                 return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')

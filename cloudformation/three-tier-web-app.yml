@@ -85,9 +85,6 @@ Resources:
     Properties:
       CidrBlock: 192.168.0.0/16
       EnableDnsSupport: true
-      Tags:
-        - Key: trust-boundary
-          Value: cloud-network
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -264,6 +261,7 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 84.212.102.179/24
+      
   externalALBEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
@@ -391,6 +389,13 @@ Resources:
         - !Ref publicSubAz1
         - !Ref publicSubAz2
       Type: 'application'
+      Tags:
+        - Key: trust-boundary
+          Value: public_cloud_network
+        - Key: data_flow
+          Value: frontEndASG
+        - Key: data_flow_source
+          Value: Web-Clients
 
   ListnerPublicALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -421,6 +426,12 @@ Resources:
         - !Ref privateSubBEAz1
         - !Ref privateSubBEAz2
       Type: 'application'
+      Tags:
+        - Key: trust-boundary
+          Value: internal_cloud_network
+        - Key: data_flow
+          Value: backEndASG
+
 
   ListnerInternalALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -486,6 +497,11 @@ Resources:
       MaxSize: '4'
       MinSize: '2'
       DesiredCapacity: '2'
+      Tags:
+        - Key: trust-boundary
+          Value: public_cloud_network
+        - Key: data_flow
+          Value: internalALB
 
     
   backEndASG:
@@ -505,7 +521,13 @@ Resources:
       MaxSize: '4'
       MinSize: '2'
       DesiredCapacity: '2'
-
+      Tags:
+        - Key: trust-boundary
+          Value: internal_cloud_network
+        - Key: data_flow
+          Value: myRDSCluster
+        - Key: data_flow_sink
+          Value: ExternalAPI
   myEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -589,3 +611,6 @@ Resources:
       StorageType: gp2
       VPCSecurityGroups: 
         - !Ref RDSSG
+      Tags:
+        - Key: trust-boundary
+          Value: internal_cloud_network
