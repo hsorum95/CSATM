@@ -431,8 +431,7 @@ Resources:
           Value: internal_cloud_network
         - Key: data_flow
           Value: backEndASG
-        - Key: data_flow_sink
-          Value: ExternalAPI
+
 
   ListnerInternalALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -527,7 +526,8 @@ Resources:
           Value: internal_cloud_network
         - Key: data_flow
           Value: myRDSCluster
-
+        - Key: data_flow_sink
+          Value: ExternalAPI
   myEC2Instance:
     Type: AWS::EC2::Instance
     Properties:

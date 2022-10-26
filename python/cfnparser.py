@@ -1,4 +1,3 @@
-from tabnanny import check
 import ruamel.yaml
 from dataclasses import dataclass
 
@@ -79,7 +78,7 @@ def get_cloudformationfile():
     with open(input_file, 'r') as stream:
         raw = stream.read()
     base = yaml.load(raw)
-    return base
+    return [base, input_file]
 
 
 def get_resources(input_dict: dict ) -> list:
@@ -93,6 +92,7 @@ def get_resources(input_dict: dict ) -> list:
     df_keyword = 'data_flow'
     sink_keyword = 'data_flow_sink'
     source_keyword = 'data_flow_source'
+    
     if check_keyword(input_dict, section_id):
         resources_dict = input_dict[section_id]
         for key in resources_dict:
@@ -134,6 +134,27 @@ def get_resources(input_dict: dict ) -> list:
     #             resource_list.append(tmp_resource)
     return resource_list
 
+#Input list of resource objects. Output list of resource objects within trustboundaries
+def get_resources_in_trustboundry(resource_list: list) -> list:
+    formatted_list : list = list()
+    for resource in resource_list:
+        if resource.trust_boundry != 'None':
+            formatted_list.append(resource)
+    return formatted_list
+
+#Input list of resource objects. Create and format txt.file
+def create_resources_file(input: list) -> None:
+    with open('resources.txt', 'w+') as file:
+        for resource in input:
+            file.write(f'Name: {resource.name}\n\tResource-type: {resource.type}\n\tResource-TrustBoundary: {resource.trust_boundry}\n\tDataFlows:\n')
+            if len(resource.data_flows) > 0:
+                for dataflow in resource.data_flows:
+                    file.write(f'\t-   Source: {dataflow.source}\n\t\tDestination: {dataflow.destination}\n\t\tDataSensitivity: {dataflow.data_sensitivity}\n')
+            else: 
+                file.write('\t-   None\n')
+            
+
+#Helper to find if a keyword is used as key in a getKeys on a dict
 def check_keyword(input_dict: dict, keyword: str) -> bool:
     if keyword in get_all_keys(input_dict):
       return True
@@ -146,14 +167,14 @@ def get_all_keys(input_dict: dict) -> list:
     test = input_dict.keys()
     key_list = list(test)
     return key_list 
-##TODO: create dataflow objects and add them to the resource objects
 
-def get_trustboundry(input_dict: dict ) -> str:
-    for key in input_dict:
-        if key == 'Resources':
-            for sub_key in input_dict[key]:
-                for sub_sub_key in input_dict[key][sub_key]:
-                    if sub_sub_key == 'Properties':
-                        for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
-                            if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
-                                return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+
+# def get_trustboundry(input_dict: dict ) -> str:
+#     for key in input_dict:
+#         if key == 'Resources':
+#             for sub_key in input_dict[key]:
+#                 for sub_sub_key in input_dict[key][sub_key]:
+#                     if sub_sub_key == 'Properties':
+#                         for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+#                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+#                                 return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')

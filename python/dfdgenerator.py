@@ -1,28 +1,29 @@
 import pydot
-from graphviz import Source
 
 
-def save_dot_to_png(dot_file):
-    graphs = pydot.graph_from_dot_file(dot_file)
-    graph = graphs[0] 
-    graph.write_png('dfd_tm.png')
 
-def create_dot_file(input_list: list):
+
+def create_dot_file(input_list: list, filename: str):
     dot = pydot.Dot(graph_type='digraph')
-    dot.obj_dict['attributes']['rankdir'] = 'LR'
+    dot.obj_dict['attributes']['labelloc'] = 't'
+    dot.obj_dict['attributes']['label'] = f'Data-flow diagram for {filename}'
 
     for item in input_list:
-        if f'cluster_{item.trust_boundry}' not in get_subgraph_names(dot):
+        if item.trust_boundry == 'None':
+            pass
+        elif f'cluster_{item.trust_boundry}' not in get_subgraph_names(dot):
             sg = pydot.Subgraph(f'cluster_{item.trust_boundry}')
             sg.obj_dict['attributes']['shape'] = 'box'
             sg.obj_dict['attributes']['label'] = f'Trust boundary: {item.trust_boundry}'
             dot.add_subgraph(sg)
             resource = pydot.Node(item.name)
-            resource.obj_dict['attributes']['label'] = f'{item.name}\nAWS resource type: {item.type}'
+            resource.obj_dict['attributes']['label'] = f'Name: {item.name}\nAWS resource type: {item.type}'
+            resource.obj_dict['attributes']['shape'] = 'box'
             sg.add_node(resource)
         elif f'cluster_{item.trust_boundry}' in get_subgraph_names(dot):
             resource = pydot.Node(item.name)
-            resource.obj_dict['attributes']['label'] = f'{item.name}\nAWS resource type: {item.type}'
+            resource.obj_dict['attributes']['label'] = f'Name: {item.name}\nAWS resource type: {item.type}'
+            resource.obj_dict['attributes']['shape'] = 'box'
             sg = dot.get_subgraph(f'cluster_{item.trust_boundry}')
             subGraph = sg[0]
             subGraph.add_node(resource)
@@ -30,14 +31,12 @@ def create_dot_file(input_list: list):
     for item in input_list:
         if len(item.data_flows) > 0:
             for df in item.data_flows:
-                print(f'item: {item.name}. source: {df.source}, destination: {df.destination}\n')
                 edge = pydot.Edge(df.source, df.destination)
                 edge.obj_dict['attributes']['label'] = 'Dataflow'
                 dot.add_edge(edge)
-    dot.del_node('cluster_None')
-    dot.write('dfd_tm.dot')
     
-    save_dot_to_png('dfd_tm.dot')
+    dot.write('dfd_tm.dot')
+    dot.write_png('dfd_tm.png')
     return dot
 
 
