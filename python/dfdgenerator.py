@@ -2,9 +2,9 @@ import pydot
 
 
 
-##TODO 26.10: annotate dataflows with protocol or sensitivity. Might have to parse the CFN another way in cfnparser to do it
+##TODO 26.10: annotate dataflows with protocol or sensitivity. Might have to parse the CFN another way in cfnparser to do it.
 def create_dot_file(input_list: list, filename: str):
-    dot = pydot.Dot(graph_type='digraph')
+    dot = pydot.Dot(graph_type='digraph', strict=True)
     dot.obj_dict['attributes']['labelloc'] = 't'
     dot.obj_dict['attributes']['label'] = f'Data-flow diagram for {filename}'
 
@@ -29,12 +29,11 @@ def create_dot_file(input_list: list, filename: str):
             subGraph.add_node(resource)
 
     for item in input_list:
-        if len(item.data_flows) > 0:
+        if item.data_flows:
             for df in item.data_flows:
                 edge = pydot.Edge(df.source, df.destination)
-                edge.obj_dict['attributes']['label'] = 'Dataflow'
+                edge.obj_dict['attributes']['label'] = f'Dataflow\n from {df.source} to {df.destination}\n {df.data_sensitivity}'
                 dot.add_edge(edge)
-    
     dot.write('dfd_tm.dot')
     dot.write_png('dfd_tm.png')
     return dot

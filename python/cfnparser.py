@@ -113,34 +113,55 @@ def get_resources(input_dict: dict ) -> list:
                         df = DataFlow(tag.get(valuew), tmp_resource.name,  'None')
                         tmp_resource.data_flows.append(df)
             resource_list.append(tmp_resource)
-                    
-    # for key in input_dict:
-    #     if key == section_id:
-    #         for sub_key in input_dict[section_id]:
-    #             tmp_resource = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None', [])
-    #             for sub_sub_key in input_dict[key][sub_key]:
-    #                 if sub_sub_key == 'Properties':
-    #                     for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
-    #                         if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
-    #                             tmp_resource.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
-    #                         if (sub_sub_sub_key == 'Tags') and len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key]) > 1:
-    #                             itr = len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key])
-    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow':
-    #                                 df = DataFlow(tmp_resource.name, input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), 'None')
-    #                                 tmp_resource.data_flows.append(df)
-    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow_source':
-    #                                 df = DataFlow(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), tmp_resource.name, 'None')
-    #                                 tmp_resource.data_flows.append(df)
-    #             resource_list.append(tmp_resource)
+    #add resources that are not in the CFN but in the DFs in the tags to the list
+
+    if resource_list:        
+        for item in resource_list:
+            if item.data_flows:
+                print(item)
+                print(type(item.data_flows))
+                print(item.data_flows)
+                print(len(item.data_flows))
+                for i in range(0,len(item.data_flows)):
+                    if item.data_flows[i].source not in get_all_resource_names(resource_list):
+                        ext_Resource = Resource(item.data_flows[i].source, 'External', 'External',[DataFlow( item.data_flows[i].source, item.name, 'None')])
+                        resource_list.append(ext_Resource)
+                        
+                    elif item.data_flows[i].destination not in get_all_resource_names(resource_list):
+                        ext_Resource = Resource(item.data_flows[i].destination, 'External', 'External',[DataFlow(item.name, item.data_flows[i].destination,  'None')])
+                        resource_list.append(ext_Resource)
+                        
+
+    if resource_list:
+        for item in resource_list:
+            print(item)
+            set_data_sensitivity(item, resource_list)
     return resource_list
+
+#helper for get_resources
+def get_all_resource_names(list: list) -> list:
+    return [resource.name for resource in list]
+
+
+#Sets data sensitivity based on wether the source and destination are in the same trust boundary
+def set_data_sensitivity(resource_from: Resource, resource_list: list) -> None:
+    if resource_from.data_flows:
+        for df in resource_from.data_flows:
+            if (get_resource_by_name(df.destination, resource_list).trust_boundry != resource_from.trust_boundry) or (get_resource_by_name(df.source, resource_list).trust_boundry != resource_from.trust_boundry):
+                df.data_sensitivity = 'Crosses Trust Boundary'
+            elif get_resource_by_name(df.destination, resource_list).trust_boundry == resource_from.trust_boundry or (get_resource_by_name(df.source, resource_list).trust_boundry == resource_from.trust_boundry): 
+                df.data_sensitivity = 'In Trust Boundary'
+    return None
+    
+def get_resource_by_name(name: str, resource_list: list) -> Resource:
+    for resource in resource_list:
+        if resource.name == name:
+            return resource
+    return None
 
 #Input list of resource objects. Output list of resource objects within trustboundaries
 def get_resources_in_trustboundry(resource_list: list) -> list:
-    formatted_list : list = list()
-    for resource in resource_list:
-        if resource.trust_boundry != 'None':
-            formatted_list.append(resource)
-    return formatted_list
+    return [resource for resource in resource_list if resource.trust_boundry != 'None']    
 
 #Input list of resource objects. Create and format txt.file
 def create_resources_file(input: list) -> None:
@@ -178,3 +199,23 @@ def get_all_keys(input_dict: dict) -> list:
 #                         for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
 #                             if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
 #                                 return input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+
+                    
+    # for key in input_dict:
+    #     if key == section_id:
+    #         for sub_key in input_dict[section_id]:
+    #             tmp_resource = Resource(sub_key,input_dict[section_id].get(sub_key,{}).get('Type'), 'None', [])
+    #             for sub_sub_key in input_dict[key][sub_key]:
+    #                 if sub_sub_key == 'Properties':
+    #                     for sub_sub_sub_key in input_dict[key][sub_key][sub_sub_key]:
+    #                         if (sub_sub_sub_key == 'Tags') and input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Key') == 'trust-boundary':
+    #                             tmp_resource.trust_boundry = input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][0].get('Value')
+    #                         if (sub_sub_sub_key == 'Tags') and len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key]) > 1:
+    #                             itr = len(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key])
+    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow':
+    #                                 df = DataFlow(tmp_resource.name, input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), 'None')
+    #                                 tmp_resource.data_flows.append(df)
+    #                             if input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Key') == 'data_flow_source':
+    #                                 df = DataFlow(input_dict[key][sub_key][sub_sub_key][sub_sub_sub_key][1].get('Value'), tmp_resource.name, 'None')
+    #                                 tmp_resource.data_flows.append(df)
+    #             resource_list.append(tmp_resource)
