@@ -2,6 +2,7 @@ from cfnparser import *
 from dfdgenerator import *
 
 # /home/hsorum95/CSATM/cloudformation/three-tier-web-app.yml
+# /home/hsorum95/CSATM/cloudformation/faas.yml
 yaml_dumped_to_dct = get_cloudformationfile()
 resources_in_list: list = get_resources(yaml_dumped_to_dct[0])
 # for item in resources_in_list:

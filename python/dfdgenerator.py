@@ -4,9 +4,10 @@ import pydot
 
 ##TODO 26.10: annotate dataflows with protocol or sensitivity. Might have to parse the CFN another way in cfnparser to do it.
 def create_dot_file(input_list: list, filename: str):
-    dot = pydot.Dot(graph_type='digraph', strict=True)
+    dot = pydot.Dot(graph_type='digraph', rankdir = 'LR', strict=True)
     dot.obj_dict['attributes']['labelloc'] = 't'
     dot.obj_dict['attributes']['label'] = f'Data-flow diagram for {filename}'
+
 
     for item in input_list:
         if item.trust_boundry == 'None':

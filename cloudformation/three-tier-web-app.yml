@@ -218,9 +218,6 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneTwo
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.6.0/28
-      Tags:
-        - Key: keyname
-          Value: value
 
   privateSubDB1:
     Type: AWS::EC2::Subnet
@@ -228,9 +225,6 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneOne
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.7.0/28
-      Tags:
-        - Key: keyname
-          Value: value
 
   privateSubDB2:
     Type: AWS::EC2::Subnet

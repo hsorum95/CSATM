@@ -1,0 +1,373 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 
+  This tempalte creates a three-tier-web-application with serverless architecture.
+
+Parameters:
+  RootDomainName:
+    Type: String
+    Default: opv2
+  APIName:
+    Type: String
+    Default: opv2-api
+
+Resources:
+  WebS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private 
+      BucketName: !Ref RootDomainName
+      WebsiteConfiguration: 
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      Tags:
+        - Key: trust-boundary
+          Value: private_cloud_objectstorage
+  
+  CloudFrontOriginId:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub "Origin access identity for ${RootDomainName}"
+  
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebS3Bucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginId}'
+            Action:
+              - 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${WebS3Bucket}/*'
+  
+  publicCDNDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt WebS3Bucket.DomainName
+            Id: !Ref WebS3Bucket
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginId}'
+        Enabled: true
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: !Ref WebS3Bucket
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+          MinTTL: 0
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+        DefaultRootObject: index.html
+        HttpVersion: http2
+      Tags:
+        - Key: trust-boundary
+          Value: public_facing_cloud
+        - Key: data_flow
+          Value: WebS3Bucket
+        - Key: data_flow_source
+          Value: Web-Clients
+  
+  apiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: Example API Gateway
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: !Ref APIName
+      Tags:
+        - Key: trust-boundary
+          Value: public_facing_cloud
+        - Key: data_flow
+          Value: OrderPrescriptionPharma
+        - Key: data_flow
+          Value: OrderNonPrescriptionPharma
+        - Key: data_flow
+          Value: VerifyOrders
+        - Key: data_flow
+          Value: AddOrDeleteEmployee
+        - Key: data_flow_source
+          Value: Web-Clients
+  
+  OrderPrescriptionPharma:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Code:         
+        ZipFile: |
+          var aws = require('aws-sdk')
+          var response = require('cfn-response')
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+              // For Delete requests, immediately send a SUCCESS response.
+              if (event.RequestType == "Delete") {
+                  response.send(event, context, "SUCCESS")
+                  return
+              }
+              var responseStatus = "FAILED"
+              var responseData = {}
+              var functionName = event.ResourceProperties.FunctionName
+              var lambda = new aws.Lambda()
+              lambda.invoke({ FunctionName: functionName }, function(err, invokeResult) {
+                  if (err) {
+                      responseData = {Error: "Invoke call failed"}
+                      console.log(responseData.Error + ":\n", err)
+                  }
+                  else responseStatus = "SUCCESS"
+                  response.send(event, context, responseStatus, responseData)
+              })
+          }
+      Role: !GetAtt
+        - LambdaExecutionRole
+        - Arn
+      Timeout: '30'
+      Tags:
+        - Key: trust-boundary
+          Value: private_logic_zone
+        - Key: data_flow
+          Value: OPv2DB
+
+
+  OrderNonPrescriptionPharma:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Code:         
+        ZipFile: |
+          var aws = require('aws-sdk')
+          var response = require('cfn-response')
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+              // For Delete requests, immediately send a SUCCESS response.
+              if (event.RequestType == "Delete") {
+                  response.send(event, context, "SUCCESS")
+                  return
+              }
+              var responseStatus = "FAILED"
+              var responseData = {}
+              var functionName = event.ResourceProperties.FunctionName
+              var lambda = new aws.Lambda()
+              lambda.invoke({ FunctionName: functionName }, function(err, invokeResult) {
+                  if (err) {
+                      responseData = {Error: "Invoke call failed"}
+                      console.log(responseData.Error + ":\n", err)
+                  }
+                  else responseStatus = "SUCCESS"
+                  response.send(event, context, responseStatus, responseData)
+              })
+          }
+      Role: !GetAtt
+        - LambdaExecutionRole
+        - Arn
+      Timeout: '30'
+      Tags:
+        - Key: trust-boundary
+          Value: private_logic_zone
+        - Key: data_flow
+          Value: OPv2DB
+  
+  VerifyOrders:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Code:         
+        ZipFile: |
+          var aws = require('aws-sdk')
+          var response = require('cfn-response')
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+              // For Delete requests, immediately send a SUCCESS response.
+              if (event.RequestType == "Delete") {
+                  response.send(event, context, "SUCCESS")
+                  return
+              }
+              var responseStatus = "FAILED"
+              var responseData = {}
+              var functionName = event.ResourceProperties.FunctionName
+              var lambda = new aws.Lambda()
+              lambda.invoke({ FunctionName: functionName }, function(err, invokeResult) {
+                  if (err) {
+                      responseData = {Error: "Invoke call failed"}
+                      console.log(responseData.Error + ":\n", err)
+                  }
+                  else responseStatus = "SUCCESS"
+                  response.send(event, context, responseStatus, responseData)
+              })
+          }
+      Role: !GetAtt
+        - LambdaExecutionRole
+        - Arn
+      Timeout: '30'
+      Tags:
+        - Key: trust-boundary
+          Value: private_logic_zone
+        - Key: data_flow
+          Value: OPv2DB
+    
+  AddOrDeleteEmployee:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Code:         
+        ZipFile: |
+          var aws = require('aws-sdk')
+          var response = require('cfn-response')
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+              // For Delete requests, immediately send a SUCCESS response.
+              if (event.RequestType == "Delete") {
+                  response.send(event, context, "SUCCESS")
+                  return
+              }
+              var responseStatus = "FAILED"
+              var responseData = {}
+              var functionName = event.ResourceProperties.FunctionName
+              var lambda = new aws.Lambda()
+              lambda.invoke({ FunctionName: functionName }, function(err, invokeResult) {
+                  if (err) {
+                      responseData = {Error: "Invoke call failed"}
+                      console.log(responseData.Error + ":\n", err)
+                  }
+                  else responseStatus = "SUCCESS"
+                  response.send(event, context, responseStatus, responseData)
+              })
+          }
+      Role: !GetAtt
+        - EmployeeLambdaExecutionRole
+        - Arn
+      Timeout: '30'
+      Tags:
+        - Key: trust-boundary
+          Value: private_employee_logic_zone
+        - Key: data_flow
+          Value: OPv2EmployeeDB
+
+  LogisticsFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Code:         
+        ZipFile: |
+          var aws = require('aws-sdk')
+          var response = require('cfn-response')
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+              // For Delete requests, immediately send a SUCCESS response.
+              if (event.RequestType == "Delete") {
+                  response.send(event, context, "SUCCESS")
+                  return
+              }
+              var responseStatus = "FAILED"
+              var responseData = {}
+              var functionName = event.ResourceProperties.FunctionName
+              var lambda = new aws.Lambda()
+              lambda.invoke({ FunctionName: functionName }, function(err, invokeResult) {
+                  if (err) {
+                      responseData = {Error: "Invoke call failed"}
+                      console.log(responseData.Error + ":\n", err)
+                  }
+                  else responseStatus = "SUCCESS"
+                  response.send(event, context, responseStatus, responseData)
+              })
+          }
+      Role: !GetAtt
+        - LambdaExecutionRole
+        - Arn
+      Timeout: '30'
+      Tags:
+        - Key: trust-boundary
+          Value: private_operations_logic_zone
+        - Key: data_flow
+          Value: OPv2DB
+        - Key: data_flow_sink
+          Value: ExternalAPI
+
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:GetItem'
+                Resource: !Ref OPv2DB
+                Effect: Allow
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+  
+  EmployeeLambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:GetItem'
+                Resource: !Ref OPv2EmployeeDB
+                Effect: Allow
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+
+  OPv2DB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+          - AttributeName: 'id'
+            AttributeType: 'S'
+      KeySchema:
+          - AttributeName: 'id'
+            KeyType: 'HASH'
+      TableName: OPv2DB
+      Tags:
+        - Key: trust-boundary
+          Value: private_order_cloud
+
+  OPv2EmployeeDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+          - AttributeName: 'id'
+            AttributeType: 'S'
+      KeySchema:
+          - AttributeName: 'id'
+            KeyType: 'HASH'
+      TableName: OPv2EmployeeDB
+      Tags:
+        - Key: trust-boundary
+          Value: private_employee_cloud
