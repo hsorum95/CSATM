@@ -28,3 +28,4 @@ def parse_threats_to_ADTree(threats: list) -> None:
 
 '''Helpers'''
 def get_all_threats_as_list(threats: list) -> list:
+    pass

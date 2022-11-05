@@ -19,18 +19,13 @@ class threats:
     id: int
     name: str
     description: str
-    severity: str
+    stride: list()
     likelihood: float
     impact: float
-    # risk = likelihood * impact
 
 @dataclass
 class mitigation:
     id: int
-    # mitagates: threats.id
     name: str
     description: str
-    cost: float
-    effectiveness: float
-    # risk_reduction = cost * effectiveness
 
