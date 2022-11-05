@@ -1,4 +1,5 @@
 import pydot
+import uuid
 
 def create_dot_file(input_list: list, filename: str):
     dot = pydot.Dot(graph_type='digraph', rankdir = 'LR', strict=True)
@@ -32,8 +33,9 @@ def create_dot_file(input_list: list, filename: str):
                 edge = pydot.Edge(df.source, df.destination)
                 edge.obj_dict['attributes']['label'] = f'Dataflow\n from {df.source} to {df.destination}\n {df.data_sensitivity}'
                 dot.add_edge(edge)
-    dot.write('dfd_tm.dot')
-    dot.write_png('dfd_tm.png')
+    id =  uuid.uuid4()
+    dot.write(f'artifacts/{id}_dfd_tm.dot')
+    dot.write_png(f'artifacts/{id}_dfd_tm.png')
     return dot
 
 

@@ -29,13 +29,25 @@ def parse_threats_to_ADTree(threats: list) -> None:
     # ...
     pass
 
-def get_threats_from_json(filenames: list) -> list:
+'''Get all threats from the threat catalog'''
+def get_threats_from_json(dir: str) -> list:
     threat_list = []
+    filenames = get_filenames_from_threatdir(dir)
     for fn in filenames:
         with open (fn) as f:
             threat = json.load(f, object_hook=lambda d: Threat(**d))
             threat_list.append(threat)
     return threat_list
+
+'''Get all remediations & mitigations from the remmit catalog'''
+def get_remediations_from_json(dir: str) -> list:
+    rem_list = []
+    filenames = get_filenames_from_remmitdir(dir)
+    for fn in filenames:
+        with open (fn) as f:
+            rem = json.load(f, object_hook=lambda d: Mitigation(**d))
+            rem_list.append(rem)
+    return rem_list
 
 '''Helpers'''
 def get_all_threats_as_list(threats) -> list:
@@ -43,6 +55,9 @@ def get_all_threats_as_list(threats) -> list:
 
 def get_filenames_from_threatdir(dir: str) -> list:
     return [f'../threat-catalog/{filename}' for filename in os.listdir(dir)]
+
+def get_filenames_from_remmitdir(dir: str) -> list:
+    return [f'../remmit-catalog/{filename}' for filename in os.listdir(dir)]
         
 '''Testing ground below'''
 

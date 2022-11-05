@@ -1,5 +1,6 @@
 import ruamel.yaml
 from data_structs import Resource, DataFlow
+import uuid
 
 class Generic:
     def __init__(self, tag, value, style=None):
@@ -152,7 +153,8 @@ def get_resources_in_trustboundry(resource_list: list) -> list:
 
 #Input list of resource objects. Create and format txt.file
 def create_resources_file(input: list) -> None:
-    with open('resources.txt', 'w+') as file:
+    id = uuid.uuid4()
+    with open(f'artifacts/{id}_resources.txt', 'w+') as file:
         for resource in input:
             file.write(f'Name: {resource.name}\n\tResource-type: {resource.type}\n\tResource-TrustBoundary: {resource.trust_boundry}\n\tDataFlows:\n')
             if len(resource.data_flows) > 0:
