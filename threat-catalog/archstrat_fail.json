@@ -1,0 +1,14 @@
+{
+    "id":4,
+    "name":"Lack of Cloud Security Architecture and Strategy",
+    "stride":[
+       "Spoofing",
+       "Tampering",
+       "Non_Repudiation",
+       "Information_Disclosure",
+       "DoS",
+       "Elevation_of_Privilege"
+    ],
+    "description":"str",
+    "impact":7.41
+ }

@@ -1,0 +1,9 @@
+{
+    "id":1,
+    "name":"Insufficient ID, Credential, Access and Key Mgt, Privileged Accounts",
+    "stride":[
+       "Information_Disclosure"
+    ],
+    "description":"str",
+    "impact":7.73
+ }

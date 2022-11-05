@@ -1,0 +1,11 @@
+{
+    "id":8,
+    "name":"Accidental Cloud Data Disclosure/ Disclosure",
+    "stride":[
+       "Tampering",
+       "Non_Repudiation",
+       "Information_Disclosure"
+    ],
+    "description":"str",
+    "impact":7.11
+}

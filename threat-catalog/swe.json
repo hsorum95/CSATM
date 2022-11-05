@@ -1,0 +1,14 @@
+{
+    "id":5,
+    "name":"Insecure Software Development",
+    "stride":[
+       "Spoofing",
+       "Tampering",
+       "Non_Repudiation",
+       "Information_Disclosure",
+       "DoS",
+       "Elevation_of_Privilege"
+    ],
+    "description":"str",
+    "impact":7.28
+ }

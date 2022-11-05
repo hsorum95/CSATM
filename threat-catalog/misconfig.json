@@ -1,0 +1,14 @@
+{
+    "id":3,
+    "name":"Misconfiguration and Inadequate Change Control",
+    "stride":[
+       "Spoofing",
+       "Tampering",
+       "Non_Repudiation",
+       "Information_Disclosure",
+       "DoS",
+       "Elevation_of_Privilege"
+    ],
+    "description":"str",
+    "impact":7.42
+ }

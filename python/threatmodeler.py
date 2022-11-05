@@ -1,6 +1,9 @@
 from data_structs import Threat, Mitigation, Resource
+import json
+import os
+
 '''Generate threats by iterating over a list of resources'''
-def generate_threats(resources: list, threat_taxonomy: list) -> list:
+def generate_threats(resources: list, threatlist: list) -> list:
     # ...
     for resource in resources:
         pass
@@ -26,6 +29,24 @@ def parse_threats_to_ADTree(threats: list) -> None:
     # ...
     pass
 
+def get_threats_from_json(filenames: list) -> list:
+    threat_list = []
+    for fn in filenames:
+        with open (fn) as f:
+            threat = json.load(f, object_hook=lambda d: Threat(**d))
+            threat_list.append(threat)
+    return threat_list
+
 '''Helpers'''
-def get_all_threats_as_list(threats: list) -> list:
-    pass
+def get_all_threats_as_list(threats) -> list:
+    return [threat.id for threat in threats]
+
+def get_filenames_from_threatdir(dir: str) -> list:
+    return [f'../threat-catalog/{filename}' for filename in os.listdir(dir)]
+        
+'''Testing ground below'''
+
+ls = get_filenames_from_threatdir('../threat-catalog')
+threats = get_threats_from_json(ls)
+for i in threats:
+    print(i)

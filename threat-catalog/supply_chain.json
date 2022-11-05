@@ -1,0 +1,11 @@
+{
+    "id":6,
+    "name":"Unsecure Third Party Resources",
+    "stride":[
+       "Non_Repudiation",
+       "Information_Disclosure",
+       "Elevation_of_Privilege"
+    ],
+    "description":"Third party resources used in the system with vulnerabilites or flaws",
+    "impact":7.21
+ }

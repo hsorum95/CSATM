@@ -1,0 +1,13 @@
+{
+    "id":9,
+    "name":"Miscnfiguration & Exploitation of Serverless & Container Workloads",
+    "stride":[
+       "Tampering",
+       "Non_Repudiation",
+       "Information_Disclosure",
+       "DoS",
+       "Elevation_of_Privilege"
+    ],
+    "description":"str",
+    "impact":7.1
+ }

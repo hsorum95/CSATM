@@ -1,0 +1,14 @@
+{
+	   "id":10,
+	   "name":"Cloud Storage Data Exfiltration",
+	   "stride":[
+		  "Spoofing",
+		  "Tampering",
+		  "Non_Repudiation",
+		  "Information_Disclosure",
+		  "DoS",
+		  "Elevation_of_Privilege"
+	   ],
+	   "description":"str",
+	   "impact":7.08
+}

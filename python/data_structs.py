@@ -15,16 +15,15 @@ class DataFlow:
     data_sensitivity: str
 
 @dataclass
-class threats:
+class Threat:
     id: int
     name: str
     description: str
     stride: list()
-    likelihood: float
     impact: float
 
 @dataclass
-class mitigation:
+class Mitigation:
     id: int
     name: str
     description: str

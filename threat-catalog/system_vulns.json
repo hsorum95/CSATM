@@ -1,0 +1,12 @@
+{
+    "id":7,
+    "name":"str",
+    "stride":[
+       "Spoofing",
+       "Tampering",
+       "Information_Disclosure",
+       "Elevation_of_Privilege"
+    ],
+    "description":"str",
+    "impact":7.14
+ }

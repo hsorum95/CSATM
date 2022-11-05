@@ -1,0 +1,10 @@
+{
+    "id":"2",
+    "name":"Insecure Interfaces and APIs",
+    "stride":[
+       "Tampering",
+       "Information_Disclosure"
+    ],
+    "description":"str",
+    "impact":7.6
+ }
