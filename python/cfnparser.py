@@ -1,6 +1,5 @@
 import ruamel.yaml
-from dataclasses import dataclass
-
+from data_structs import Resource, DataFlow
 
 class Generic:
     def __init__(self, tag, value, style=None):
@@ -53,18 +52,6 @@ def default_constructor(constructor, tag_suffix, node):
     state = generic.construct(constructor, node)
     instance.__init__(tag_suffix, state, style=style)
 
-@dataclass
-class Resource:
-    name: str
-    type: str
-    trust_boundry: str
-    data_flows: list()
-
-@dataclass
-class DataFlow:
-    source: Resource
-    destination: Resource
-    data_sensitivity: str
 
 ruamel.yaml.add_multi_constructor('', default_constructor, Loader=ruamel.yaml.SafeLoader)
 yaml = ruamel.yaml.YAML(typ='safe', pure=True)

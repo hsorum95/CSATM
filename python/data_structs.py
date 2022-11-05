@@ -1,23 +1,36 @@
 from dataclasses import dataclass
 
+
+@dataclass
+class Resource:
+    name: str
+    type: str
+    trust_boundry: str
+    data_flows: list()
+
+@dataclass
+class DataFlow:
+    source: Resource
+    destination: Resource
+    data_sensitivity: str
+
 @dataclass
 class threats:
-    uuid: int
+    id: int
     name: str
     description: str
     severity: str
     likelihood: float
     impact: float
-    risk = likelihood * impact
+    # risk = likelihood * impact
 
 @dataclass
 class mitigation:
-    uuid: int
-    mitagates: threats.uuid
+    id: int
+    # mitagates: threats.id
     name: str
     description: str
     cost: float
     effectiveness: float
-    risk_reduction = cost * effectiveness
+    # risk_reduction = cost * effectiveness
 
-    

@@ -1,3 +1,4 @@
+from data_structs import Threat, Mitigation, Resource
 '''Generate threats by iterating over a list of resources'''
 def generate_threats(resources: list, threat_taxonomy: list) -> list:
     # ...
