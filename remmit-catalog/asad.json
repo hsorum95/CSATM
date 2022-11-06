@@ -1,0 +1,8 @@
+{
+    "id":3,
+    "name":"Automated Secure Application Deployment",
+    "CCMV4_ID":"AIS-06",
+    "remediation": false,
+    "description":"Automated capabilites for secure, standardized and comlipant development",
+    "related_to":[2,5,9]
+ }

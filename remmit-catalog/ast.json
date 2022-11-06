@@ -1,0 +1,8 @@
+{
+    "id":5,
+    "name":"Automated application security testing",
+    "CCMV4_ID":"AIS-05",
+    "remediation": false,
+    "description":"Automate security testing",
+    "related_to":[3,5,9]
+ }

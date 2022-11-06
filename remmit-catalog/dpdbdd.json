@@ -1,0 +1,8 @@
+{
+    "id":7,
+    "name":"Data Protection by Design and Default",
+    "CCMV4_ID":"DSP-07",
+    "remediation": true,
+    "description":"Ensure that data is protected by design and by default",
+    "related_to":[4,8,9,10]
+ }

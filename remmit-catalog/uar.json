@@ -1,0 +1,8 @@
+{
+    "id":2,
+    "name":"User access review",
+    "CCMV4_ID":"IAM-08",
+    "remediation": false,
+    "description":"Review user and privelege access",
+    "related_to":[1,3]
+ }

@@ -1,0 +1,8 @@
+{
+    "id":9,
+    "name":"Vulnerability Identification",
+    "CCMV4_ID":"TVM-07",
+    "remediation": false,
+    "description":"Have a system to identify vulnerabilites and automate the process",
+    "related_to":[7,9]
+ }

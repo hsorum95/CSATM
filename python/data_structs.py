@@ -26,5 +26,9 @@ class Threat:
 class Mitigation:
     id: int
     name: str
+    CCMV4_ID: str
+    remediation: bool
     description: str
+    related_to: list()
+
 

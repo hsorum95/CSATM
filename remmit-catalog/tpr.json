@@ -1,0 +1,8 @@
+{
+    "id":8,
+    "name":"Supply chain risk management",
+    "CCMV4_ID":"STA-08",
+    "remediation": true,
+    "description":"Manage the risk of all parts of the supply chain",
+    "related_to":[6]
+ }

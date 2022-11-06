@@ -1,0 +1,8 @@
+{
+    "id":4,
+    "name":"Data Encryption",
+    "CCMV4_ID":"CEK-03",
+    "remediation": true,
+    "description":"Encrypt sensitive data",
+    "related_to":[2,9,10]
+ }

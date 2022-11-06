@@ -50,18 +50,20 @@ def get_remediations_from_json(dir: str) -> list:
     return rem_list
 
 '''Helpers'''
-def get_all_threats_as_list(threats) -> list:
-    return [threat.id for threat in threats]
 
 def get_filenames_from_threatdir(dir: str) -> list:
-    return [f'../threat-catalog/{filename}' for filename in os.listdir(dir)]
+    return [f'{dir}/{filename}' for filename in os.listdir(dir)]
 
 def get_filenames_from_remmitdir(dir: str) -> list:
-    return [f'../remmit-catalog/{filename}' for filename in os.listdir(dir)]
+    return [f'{dir}/{filename}' for filename in os.listdir(dir)]
         
 '''Testing ground below'''
 
-ls = get_filenames_from_threatdir('../threat-catalog')
-threats = get_threats_from_json(ls)
+
+threats = get_threats_from_json('../threat-catalog')
+for i in threats:
+    print(i)
+
+threats = get_remediations_from_json('../remmit-catalog')
 for i in threats:
     print(i)
