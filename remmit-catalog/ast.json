@@ -3,6 +3,6 @@
     "name":"Automated application security testing",
     "CCMV4_ID":"AIS-05",
     "remediation": false,
-    "description":"Automate security testing",
+    "description":"Automate testing of code and artifacts for vulnerabilities",
     "related_to":[3,5,9]
  }

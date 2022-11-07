@@ -4,5 +4,5 @@
     "CCMV4_ID":"TVM-07",
     "remediation": false,
     "description":"Have a system to identify vulnerabilites and automate the process",
-    "related_to":[7,9]
+    "related_to":[3,7,9,10]
  }

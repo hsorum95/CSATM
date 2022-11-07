@@ -2,7 +2,7 @@
     "id":10,
     "name":"OS Hardening and Base Controls",
     "CCMV4_ID":"DSP-07",
-    "remediation": true,
+    "remediation": false,
     "description":"Create base images with adequate security controld",
-    "related_to":[4,9]
+    "related_to":[2,3,4,9]
  }

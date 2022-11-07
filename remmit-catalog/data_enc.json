@@ -4,5 +4,5 @@
     "CCMV4_ID":"CEK-03",
     "remediation": true,
     "description":"Encrypt sensitive data",
-    "related_to":[2,9,10]
+    "related_to":[2,3,7,9,10]
  }

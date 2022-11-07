@@ -4,5 +4,5 @@
     "CCMV4_ID":"DSP-07",
     "remediation": true,
     "description":"Ensure that data is protected by design and by default",
-    "related_to":[4,8,9,10]
+    "related_to":[3,4,8,9,10,11]
  }

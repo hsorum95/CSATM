@@ -4,5 +4,5 @@
     "CCMV4_ID":"IAM-05",
     "remediation": true,
     "description":"Apply the principle of least privilege for all roles in the system",
-    "related_to":[1,5,6]
+    "related_to":[1,5,6,9,10]
  }

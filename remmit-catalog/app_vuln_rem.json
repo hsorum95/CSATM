@@ -1,8 +1,8 @@
 {
     "id":11,
     "name":"Application Vulnerability Remediation",
-    "CCMV4_ID":"AIS-09",
+    "CCMV4_ID":"AIS-07",
     "remediation": false,
     "description":"Define and implement a process to remediate application security vulnerabilities, automating remediation when possible",
-    "related_to":[9]
+    "related_to":[7,9,10]
  }
