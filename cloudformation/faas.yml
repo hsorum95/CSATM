@@ -23,7 +23,7 @@ Resources:
         - Key: trust-boundary
           Value: private_cloud_objectstorage
         - Key: public
-          Value: true
+          Value: "True"
   
   CloudFrontOriginId:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -78,7 +78,7 @@ Resources:
         - Key: data_flow_source
           Value: Web-Clients
         - Key: public
-          Value: true
+          Value: "True"
   
   apiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -141,7 +141,7 @@ Resources:
         - Key: data_flow
           Value: OPv2DB
         - Key: data_processing
-          value: true
+          Value: "True"
 
 
   OrderNonPrescriptionPharma:
@@ -183,7 +183,7 @@ Resources:
         - Key: data_flow
           Value: OPv2DB
         - Key: data_processing
-          value: true
+          Value: "True"
   
   VerifyOrders:
     Type: 'AWS::Lambda::Function'
@@ -224,7 +224,7 @@ Resources:
         - Key: data_flow
           Value: OPv2DB
         - Key: data_processing
-          value: true
+          Value: "True"
     
   AddOrDeleteEmployee:
     Type: 'AWS::Lambda::Function'
@@ -265,7 +265,7 @@ Resources:
         - Key: data_flow
           Value: OPv2EmployeeDB
         - Key: data_processing
-          value: true
+          Value: "True"
 
   LogisticsFunction:
     Type: 'AWS::Lambda::Function'
@@ -306,7 +306,7 @@ Resources:
         - Key: data_flow
           Value: OPv2DB
         - Key: data_processing
-          value: true
+          Value: "True"
         - Key: data_flow_sink
           Value: ExternalAPI
 
@@ -372,7 +372,7 @@ Resources:
         - Key: trust-boundary
           Value: private_order_cloud
         - Key: datastore
-          Value: true
+          Value: "True"
 
   OPv2EmployeeDB:
     Type: AWS::DynamoDB::Table
@@ -388,4 +388,4 @@ Resources:
         - Key: trust-boundary
           Value: private_employee_cloud
         - Key: datastore
-          Value: true
+          Value: "True"

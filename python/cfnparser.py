@@ -80,11 +80,14 @@ def get_resources(input_dict: dict ) -> list:
     df_keyword = 'data_flow'
     sink_keyword = 'data_flow_sink'
     source_keyword = 'data_flow_source'
+    public_kw = 'public'
+    dp_kw = 'data_processing'
+    datastore_kw = 'datastore'
     
     if check_keyword(input_dict, section_id):
         resources_dict = input_dict[section_id]
         for key in resources_dict:
-            tmp_resource = Resource(key,input_dict[section_id].get(key,{}).get('Type'), 'None', [])
+            tmp_resource = Resource(key,input_dict[section_id].get(key,{}).get('Type'), 'None', [], False, False, False)
             resource_dict = resources_dict[key]
             if check_keyword(resource_dict[props_keyword], tags_keyword):
                 tags_list = resource_dict[props_keyword][tags_keyword]
@@ -100,29 +103,30 @@ def get_resources(input_dict: dict ) -> list:
                     if tag.get(keyw) == source_keyword:
                         df = DataFlow(tag.get(valuew), tmp_resource.name,  'None')
                         tmp_resource.data_flows.append(df)
+                    if tag.get(keyw) == public_kw:
+                        tmp_resource.public = toBool(tag.get(valuew))
+                    if tag.get(keyw) == dp_kw:
+                        tmp_resource.data_processing = toBool(tag.get(valuew))
+                    if tag.get(keyw) == datastore_kw:
+                        tmp_resource.data_store = toBool(tag.get(valuew))
             resource_list.append(tmp_resource)
     #add resources that are not in the CFN but in the DFs in the tags to the list
 
     if resource_list:        
         for item in resource_list:
             if item.data_flows:
-                print(item)
-                print(type(item.data_flows))
-                print(item.data_flows)
-                print(len(item.data_flows))
                 for i in range(0,len(item.data_flows)):
                     if item.data_flows[i].source not in get_all_resource_names(resource_list):
-                        ext_Resource = Resource(item.data_flows[i].source, 'External', 'External',[DataFlow( item.data_flows[i].source, item.name, 'None')])
+                        ext_Resource = Resource(item.data_flows[i].source, 'External', 'External',[DataFlow( item.data_flows[i].source, item.name, 'None')], False, False, False)
                         resource_list.append(ext_Resource)
                         
                     elif item.data_flows[i].destination not in get_all_resource_names(resource_list):
-                        ext_Resource = Resource(item.data_flows[i].destination, 'External', 'External',[DataFlow(item.name, item.data_flows[i].destination,  'None')])
+                        ext_Resource = Resource(item.data_flows[i].destination, 'External', 'External',[DataFlow(item.name, item.data_flows[i].destination,  'None')], True, False, False)
                         resource_list.append(ext_Resource)
                         
 
     if resource_list:
         for item in resource_list:
-            print(item)
             set_data_sensitivity(item, resource_list)
     return resource_list
 
@@ -156,7 +160,7 @@ def create_resources_file(input: list) -> None:
     id = uuid.uuid4()
     with open(f'artifacts/{id}_resources.txt', 'w+') as file:
         for resource in input:
-            file.write(f'Name: {resource.name}\n\tResource-type: {resource.type}\n\tResource-TrustBoundary: {resource.trust_boundry}\n\tDataFlows:\n')
+            file.write(f'Name: {resource.name}\n\tResource-type: {resource.type}\n\tResource-TrustBoundary: {resource.trust_boundry}\n\tResource exposed public: {resource.public}\n\tResource process data: {resource.data_processing}\n\tResource is a datastore: {resource.data_store}\n\tDataFlows:\n')
             if len(resource.data_flows) > 0:
                 for dataflow in resource.data_flows:
                     file.write(f'\t-   Source: {dataflow.source}\n\t\tDestination: {dataflow.destination}\n\t\tDataSensitivity: {dataflow.data_sensitivity}\n')
@@ -178,6 +182,11 @@ def get_all_keys(input_dict: dict) -> list:
     key_list = list(test)
     return key_list 
 
+def toBool(str: str):
+    if(str == 'True'):
+        return True
+    elif(str == 'False'):
+        return False
 
 # def get_trustboundry(input_dict: dict ) -> str:
 #     for key in input_dict:
