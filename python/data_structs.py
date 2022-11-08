@@ -7,6 +7,9 @@ class Resource:
     type: str
     trust_boundry: str
     data_flows: list()
+    public: bool
+    data_processing: bool
+    data_store: bool
 
 @dataclass
 class DataFlow:
