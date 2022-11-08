@@ -22,6 +22,8 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: private_cloud_objectstorage
+        - Key: public
+          Value: true
   
   CloudFrontOriginId:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -75,6 +77,8 @@ Resources:
           Value: WebS3Bucket
         - Key: data_flow_source
           Value: Web-Clients
+        - Key: public
+          Value: true
   
   apiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -136,6 +140,8 @@ Resources:
           Value: private_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          value: true
 
 
   OrderNonPrescriptionPharma:
@@ -176,6 +182,8 @@ Resources:
           Value: private_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          value: true
   
   VerifyOrders:
     Type: 'AWS::Lambda::Function'
@@ -215,6 +223,8 @@ Resources:
           Value: private_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          value: true
     
   AddOrDeleteEmployee:
     Type: 'AWS::Lambda::Function'
@@ -254,6 +264,8 @@ Resources:
           Value: private_employee_logic_zone
         - Key: data_flow
           Value: OPv2EmployeeDB
+        - Key: data_processing
+          value: true
 
   LogisticsFunction:
     Type: 'AWS::Lambda::Function'
@@ -293,6 +305,8 @@ Resources:
           Value: private_operations_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          value: true
         - Key: data_flow_sink
           Value: ExternalAPI
 
@@ -357,6 +371,8 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: private_order_cloud
+        - Key: datastore
+          Value: true
 
   OPv2EmployeeDB:
     Type: AWS::DynamoDB::Table
@@ -371,3 +387,5 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: private_employee_cloud
+        - Key: datastore
+          Value: true
