@@ -1,6 +1,6 @@
 {
     "id":9,
-    "name":"Miscnfiguration & Exploitation of Serverless & Container Workloads",
+    "name":"Misconfiguration & Exploitation of Serverless & Container Workloads",
     "stride":[
        "Tampering",
        "Non_Repudiation",

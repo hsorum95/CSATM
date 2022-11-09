@@ -1,5 +1,6 @@
 from cfnparser import *
 from dfdgenerator import *
+from threatmodeler import generate_threats, generate_mitigations, get_threats_from_json
 
 # /home/hsorum95/CSATM/cloudformation/three-tier-web-app.yml
 # /home/hsorum95/CSATM/cloudformation/faas.yml
@@ -10,4 +11,6 @@ resources_in_list: list = get_resources(yaml_dumped_to_dct[0])
 tb_resources = get_resources_in_trustboundry(resources_in_list)
 create_resources_file(tb_resources)
 dfd = create_dot_file(resources_in_list,yaml_dumped_to_dct[1])
+tl = generate_threats(resources_in_list, get_threats_from_json('../threat-catalog'))
+
 print("Dot-file and DFD-png created")
