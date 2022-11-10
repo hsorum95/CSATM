@@ -4,6 +4,7 @@
     "stride":[
        "Information_Disclosure"
     ],
+    "type":"resource",
     "description":"str",
     "impact":7.73
  }

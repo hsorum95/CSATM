@@ -15,23 +15,25 @@ def generate_threats(resources: list, threatlist: list) -> dict:
     for resource in resources:
         sm = get_resource_type_servicemodel(resource)
         if sm == iaas:
-            add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[0], None))
-            add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[1], None))
-            
+            pass
         elif sm == paas:
-            add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[1], None))
-            add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[2], None))
+            if (check_dataprocessing(resource) == False and check_datastoreage(resource) == False and check_public(resource) == False):
+                for df in resource.data_flows:
+                    if (df.data_sensitivity == 'Crosses Trust Boundary'and df.encrypted == False):
+                        add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[1], None))  
+                        add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[8], None) )
+            print(resource)
         elif sm == saas:  
-            add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[3], None))
+            pass
         elif sm == ext:
-            add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[4], None))
+            pass
         #Sm will be none when the resource is not in a trustboundry, and thus we disregard it
         elif sm is None:
             pass
         else:
             raise Exception('Unknown service model')
     with open('threatmodel.json', 'w+') as f:
-        json.dump(threats_in_system, f)
+        json.dump(threats_in_system, f, indent=4)
     return threats_in_system
 
 '''Generate mitigations by iterating over a list of threats'''
@@ -68,6 +70,19 @@ def get_remediations_from_json(dir: str) -> list:
     return rem_list
 
 '''Helpers'''
+
+def check_dataprocessing(resource: Resource) -> bool:
+    return resource.data_processing
+
+def check_datastoreage(resource: Resource) -> bool:
+    return resource.data_store
+
+def check_public(resource: Resource) -> bool:
+    return resource.public
+
+def evaluate_resource_for_threats(resource: Resource,  threatlist: list) -> list:
+    '''Evaluate a resource for threats. Takes in a resource-object and a list of threat objects.'''
+    pass
 
 def add_to_TM_dict(tm_dict: dict, resource: Resource, threat_instance: Threat_Instance) -> None:
     '''Add a threat instance to the dict containing the threatmodel for the system being modeled

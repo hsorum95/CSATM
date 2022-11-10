@@ -11,7 +11,6 @@ class Resource:
     public: bool
     data_processing: bool
     data_store: bool
-    id: UUID = uuid4()
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
@@ -21,6 +20,7 @@ class DataFlow:
     source: Resource
     destination: Resource
     data_sensitivity: str
+    encrypted: bool = True #The year is 2022. We treat all traffic as encrypted unless otherwise specified
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
