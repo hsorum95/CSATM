@@ -5,6 +5,7 @@
        "Tampering",
        "Information_Disclosure"
     ],
+    "type":"External",
     "description":"str",
     "impact":7.6
  }

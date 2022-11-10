@@ -1,12 +1,13 @@
 {
     "id":7,
-    "name":"str",
+    "name":"System Vulnerabilities",
     "stride":[
        "Spoofing",
        "Tampering",
        "Information_Disclosure",
        "Elevation_of_Privilege"
     ],
+    "type":"Application",
     "description":"str",
     "impact":7.14
  }

@@ -23,8 +23,9 @@ Resources:
         - Key: trust-boundary
           Value: private_cloud_objectstorage
         - Key: public
+        - Key: data_processing #not really true, but it does serve content
           Value: "True"
-  
+
   CloudFrontOriginId:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:

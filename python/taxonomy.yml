@@ -4,10 +4,10 @@ iaas:
   - "AWS::ElasticLoadBalancingV2::LoadBalancer"
   - "AWS::AutoScaling::AutoScalingGroup"
 paas: 
-  - "AWS::ApiGateway::RestApi"
   - "AWS::Lambda::Function"
   - "AWS::DynamoDB::Table"
-  - "AWS::S3::Bucket"
   - "AWS::RDS::DBInstance"
 saas: 
   - "AWS::CloudFront::Distribution"
+  - "AWS::S3::Bucket"
+  - "AWS::ApiGateway::RestApi"

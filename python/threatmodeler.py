@@ -1,13 +1,24 @@
-from data_structs import Threat, Mitigation, Resource, Threat_Instance
+from data_structs import Threat, Mitigation, Resource
 import json
 import yaml
 import os
 
+'''We have defined four "types" of threats. They are resource level threat, traffic level threats and application level threats
+Resource level threats are threats that are inherent to the resource itself. For example, a database that is not encrypted
+Traffic level threats are threats that are inherent to the traffic between resources. For example, a dataflow that is not encrypted
+Application level threats are threats that are inherent to the application itself. For example, a web application that has a vulnerability in the code
+External threats are threats that are inherent to the external environment due to that we do not have control over'''
 
 def generate_threats(resources: list, threatlist: list) -> dict:
     '''Generate threats by iterating over a list of resources. Takes in a list of resource-objects
     and a list of threat objects. Returns a list of threat instances and saves a json in artifacs-dir'''
-    threats_in_system = {}
+    threats_in_system = {} # dict representing the threatmodel of the system
+   
+    r_threats = get_resource_threats(threatlist)
+    print(r_threats)
+    t_threats = get_traffic_threats(threatlist)
+    a_threats = get_application_threats(threatlist)
+    e_threats = get_external_threats(threatlist)
     iaas = 'iaas'
     paas = 'paas'
     saas = 'saas'
@@ -15,18 +26,18 @@ def generate_threats(resources: list, threatlist: list) -> dict:
     for resource in resources:
         sm = get_resource_type_servicemodel(resource)
         if sm == iaas:
-            pass
+            generate_resource_threats(resource, r_threats, threats_in_system)
+            generate_traffic_threats(resource, t_threats, threats_in_system)
+            generate_application_threats(resource, a_threats, threats_in_system)
         elif sm == paas:
-            if (check_dataprocessing(resource) == False and check_datastoreage(resource) == False and check_public(resource) == False):
-                for df in resource.data_flows:
-                    if (df.data_sensitivity == 'Crosses Trust Boundary'and df.encrypted == False):
-                        add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[1], None))  
-                        add_to_TM_dict(threats_in_system,resource,Threat_Instance(threatlist[8], None) )
-            print(resource)
+            generate_resource_threats(resource, r_threats, threats_in_system)
+            generate_traffic_threats(resource, t_threats, threats_in_system)
+            generate_application_threats(resource, a_threats, threats_in_system)
         elif sm == saas:  
-            pass
+            generate_resource_threats(resource, r_threats, threats_in_system)
         elif sm == ext:
-            pass
+            generate_external_threat(resource, e_threats, threats_in_system)
+            generate_traffic_threats(resource, t_threats, threats_in_system)
         #Sm will be none when the resource is not in a trustboundry, and thus we disregard it
         elif sm is None:
             pass
@@ -35,6 +46,7 @@ def generate_threats(resources: list, threatlist: list) -> dict:
     with open('threatmodel.json', 'w+') as f:
         json.dump(threats_in_system, f, indent=4)
     return threats_in_system
+
 
 '''Generate mitigations by iterating over a list of threats'''
 def generate_mitigations(resources: list, mitigations: list) -> list:
@@ -71,6 +83,48 @@ def get_remediations_from_json(dir: str) -> list:
 
 '''Helpers'''
 
+
+def generate_resource_threats(resource: Resource, threats: list, tm: dict) -> None:
+    '''Generate threats on the resource level. Checks attributes of the resource and applies 
+    threats that are relevant based on the attributes mapped against STRIDE'''
+ 
+
+    def lstproc(lst:list,str: str) -> list:
+        lst2 = list()
+        for threat in lst:
+                for t in threat.stride:
+                    if t == str:
+                        lst2.append(threat)
+        return lst2
+    info_disc = lstproc(threats, 'Information Disclosure')
+    tamp = lstproc(threats, 'Tampering')
+    denial = lstproc(threats, 'DoS')
+
+    if resource.public:
+        add_to_TM_dict(tm, resource, info_disc)
+    if resource.data_processing:
+        add_to_TM_dict(tm, resource, tamp)
+        add_to_TM_dict(tm, resource, denial)
+    if resource.data_store:
+        add_to_TM_dict(tm, resource,tamp)
+    
+
+def generate_traffic_threats(resource: Resource, threats: list, tm: dict) -> None:
+        dfs = resource.data_flows
+        if len(dfs) > 0:    
+            for df in dfs: 
+                if df.encrypted == False and df.data_sensitivity == 'Crosses Trust Boundary':
+                    add_to_TM_dict(tm, resource, threats)
+    
+
+def generate_application_threats(resource: Resource, threats: list, tm: dict) -> None:
+    if resource.data_store == False:
+        add_to_TM_dict(tm, resource, threats)
+
+
+def generate_external_threat(resource: Resource, threats: list, tm: dict) -> None:
+    add_to_TM_dict(tm, resource, threats)
+
 def check_dataprocessing(resource: Resource) -> bool:
     return resource.data_processing
 
@@ -80,17 +134,29 @@ def check_datastoreage(resource: Resource) -> bool:
 def check_public(resource: Resource) -> bool:
     return resource.public
 
-def evaluate_resource_for_threats(resource: Resource,  threatlist: list) -> list:
-    '''Evaluate a resource for threats. Takes in a resource-object and a list of threat objects.'''
-    pass
+def get_resource_threats(threatlist: list) -> list:
+    return [threat for threat in threatlist if threat.type == 'Resource']
 
-def add_to_TM_dict(tm_dict: dict, resource: Resource, threat_instance: Threat_Instance) -> None:
-    '''Add a threat instance to the dict containing the threatmodel for the system being modeled
+def get_traffic_threats(threatlist: list) -> list:
+    return [threat for threat in threatlist if threat.type == 'Traffic']
+
+def get_application_threats(threatlist: list) -> list:
+    return [threat for threat in threatlist if threat.type == 'Application']
+
+def get_external_threats(threatlist: list) -> list:
+    return [threat for threat in threatlist if threat.type == 'External']
+
+def get_other_threats(threatlist: list) -> list:
+    return [threat for threat in threatlist if threat.type == 'Other']
+
+def add_to_TM_dict(tm_dict: dict, resource: Resource, threatlist: list) -> None:
+    '''Add a threat to the dict containing the threatmodel for the system being modeled
     input: tm_dict: dict, resource: Resource, threat_instance: Threat_Instance'''
-    if resource.name not in tm_dict:
-        tm_dict[resource.name] = [(f'{threat_instance.threat.id}, {threat_instance.threat.name}')]
-    elif resource.name in tm_dict:
-        tm_dict[resource.name].append((f'{threat_instance.threat.id}, {threat_instance.threat.name}'))
+    for threat in threatlist:
+        if resource.name not in tm_dict:
+            tm_dict[resource.name] = [(f'{threat.id}, {threat.name}')]
+        elif resource.name in tm_dict:
+            tm_dict[resource.name].append((f'{threat.id}, {threat.name}'))
 
 def get_filenames_from_threatdir(dir: str) -> list:
     return [f'{dir}/{filename}' for filename in os.listdir(dir)]

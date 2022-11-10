@@ -31,6 +31,7 @@ class Threat:
     description: str
     stride: list()
     impact: float
+    type: str
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
@@ -43,14 +44,6 @@ class Mitigation:
     remediation: bool
     description: str
     related_to: list()
-    def to_json(self):
-        return json.dumps(self, default=lambda o: o.__dict__, 
-            sort_keys=True, indent=4)
-
-@dataclass
-class Threat_Instance:
-    threat: Threat
-    mitigation: Mitigation
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)

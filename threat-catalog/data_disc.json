@@ -6,6 +6,7 @@
        "Non_Repudiation",
        "Information_Disclosure"
     ],
+    "type":"Resource",
     "description":"str",
     "impact":7.11
 }
