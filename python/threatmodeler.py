@@ -96,14 +96,15 @@ def generate_resource_threats(resource: Resource, threats: list, tm: dict) -> No
                     if t == str:
                         lst2.append(threat)
         return lst2
-    info_disc = lstproc(threats, 'Information Disclosure')
+    info_disc = lstproc(threats, 'Information_Disclosure')
     tamp = lstproc(threats, 'Tampering')
     denial = lstproc(threats, 'DoS')
 
     if resource.public:
         add_to_TM_dict(tm, resource, info_disc)
     if resource.data_processing:
-        add_to_TM_dict(tm, resource, tamp)
+        if resource.public == False:
+           add_to_TM_dict(tm, resource, info_disc)
         add_to_TM_dict(tm, resource, denial)
     if resource.data_store:
         add_to_TM_dict(tm, resource,tamp)
@@ -118,7 +119,7 @@ def generate_traffic_threats(resource: Resource, threats: list, tm: dict) -> Non
     
 
 def generate_application_threats(resource: Resource, threats: list, tm: dict) -> None:
-    if resource.data_store == False:
+    if resource.data_store == False and resource.data_processing == True:
         add_to_TM_dict(tm, resource, threats)
 
 
@@ -151,12 +152,15 @@ def get_other_threats(threatlist: list) -> list:
 
 def add_to_TM_dict(tm_dict: dict, resource: Resource, threatlist: list) -> None:
     '''Add a threat to the dict containing the threatmodel for the system being modeled
-    input: tm_dict: dict, resource: Resource, threat_instance: Threat_Instance'''
+    input: tm_dict: dict, resource: Resource, threatlist: list'''
     for threat in threatlist:
         if resource.name not in tm_dict:
             tm_dict[resource.name] = [(f'{threat.id}, {threat.name}')]
         elif resource.name in tm_dict:
-            tm_dict[resource.name].append((f'{threat.id}, {threat.name}'))
+            if (f'{threat.id}, {threat.name}') in tm_dict[resource.name]:
+                pass
+            else:
+                tm_dict[resource.name].append((f'{threat.id}, {threat.name}'))
 
 def get_filenames_from_threatdir(dir: str) -> list:
     return [f'{dir}/{filename}' for filename in os.listdir(dir)]

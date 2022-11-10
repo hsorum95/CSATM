@@ -142,9 +142,7 @@ Resources:
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.1.0/28
       MapPublicIpOnLaunch: true
-      Tags:
-        - Key: trustzone
-          Value: value
+
 
   PublicSubAz1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -159,9 +157,7 @@ Resources:
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.2.0/28
       MapPublicIpOnLaunch: true
-      Tags:
-        - Key: trustzone
-          Value: value
+
   
   PublicSubAz2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -176,9 +172,7 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneOne
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.3.0/28
-      Tags:
-          - Key: trustzone
-            Value: value
+
 
   PrivateSubAz1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -192,9 +186,6 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneTwo
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.4.0/28
-      Tags:
-          - Key: trustzone
-            Value: value
 
   PrivateSubAz2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -208,9 +199,6 @@ Resources:
       AvailabilityZone: !Ref AvailabilityZoneOne
       VpcId: !Ref PharmacyVPC
       CidrBlock: 192.168.5.0/28
-      Tags:
-          - Key: trustzone
-            Value: value
 
   privateSubBEAz2:
     Type: AWS::EC2::Subnet
@@ -390,6 +378,8 @@ Resources:
           Value: frontEndASG
         - Key: data_flow_source
           Value: Web-Clients
+        - Key: public
+          Value: "True"
 
   ListnerPublicALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -496,6 +486,9 @@ Resources:
           Value: public_cloud_network
         - Key: data_flow
           Value: internalALB
+        - Key: data_processing
+          Value: "True"
+
 
     
   backEndASG:
@@ -522,6 +515,9 @@ Resources:
           Value: myRDSCluster
         - Key: data_flow_sink
           Value: ExternalAPI
+        - Key: data_processing
+          Value: "True"
+
   myEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -608,3 +604,5 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: internal_cloud_network
+        - Key: datastore
+          Value: "True"
