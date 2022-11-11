@@ -15,7 +15,6 @@ def generate_threats(resources: list, threatlist: list) -> dict:
     threats_in_system = {} # dict representing the threatmodel of the system
    
     r_threats = get_resource_threats(threatlist)
-    print(r_threats)
     t_threats = get_traffic_threats(threatlist)
     a_threats = get_application_threats(threatlist)
     e_threats = get_external_threats(threatlist)
@@ -49,10 +48,18 @@ def generate_threats(resources: list, threatlist: list) -> dict:
 
 
 '''Generate mitigations by iterating over a list of threats'''
-def generate_mitigations(resources: list, mitigations: list) -> list:
-    # ...
-    for resource in resources:
-        pass
+def generate_mitigations(threatmodel: dict, mitigations: list) -> list:
+    '''takes in a threatmodel as a dict and creates a list of the applicable remediations according to CSAM'''
+    mitigations_in_system = {}
+    for resource in threatmodel:
+        for threat in threatmodel[resource]:
+            for mit in mitigations:
+                if int(threat[0]) in mit.related_to:
+                   add_to_mit_dict(threat, mitigations_in_system, resource, [mit])
+
+    with open('mitigations.json', 'w+') as f:
+        json.dump(mitigations_in_system, f, indent=4)
+    return mitigations_in_system
 
 
 '''Parse threats to a DOT-representation of ADTree'''
@@ -161,6 +168,19 @@ def add_to_TM_dict(tm_dict: dict, resource: Resource, threatlist: list) -> None:
                 pass
             else:
                 tm_dict[resource.name].append((f'{threat.id}, {threat.name}'))
+
+
+def add_to_mit_dict(threat, mit_dict: dict, resource: str, mitigations: list):
+    '''Add a mitigation to the dict containing the mitigations for the system being modeled
+    input: mit_dict: dict, resource: str, mitigations, list'''
+    for mitigation in mitigations:
+        if resource not in mit_dict:
+                mit_dict[resource] = [(f'{threat}, Mitigation id: {mitigation.id} & Mitigation: {mitigation.name}')]
+        elif resource in mit_dict:
+            if (f'{threat}, Mitigation id: {mitigation.id} & Mitigation: {mitigation.name}') in mit_dict[resource]:
+                pass
+            else:
+                mit_dict[resource].append((f'{threat}, Mitigation id: {mitigation.id} & Mitigation: {mitigation.name}'))
 
 def get_filenames_from_threatdir(dir: str) -> list:
     return [f'{dir}/{filename}' for filename in os.listdir(dir)]
