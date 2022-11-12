@@ -2,6 +2,7 @@ from data_structs import Threat, Mitigation, Resource
 import json
 import yaml
 import os
+import pydot
 
 '''We have defined four "types" of threats. They are resource level threat, traffic level threats and application level threats
 Resource level threats are threats that are inherent to the resource itself. For example, a database that is not encrypted
@@ -63,9 +64,18 @@ def generate_mitigations(threatmodel: dict, mitigations: list) -> list:
 
 
 '''Parse threats to a DOT-representation of ADTree'''
-def parse_threats_to_ADTree(threats: list) -> None:
-    # ...
-    pass
+def parse_threats_to_ADTree(mit_filename: str) -> None:
+    '''Parse threats to a DOT-representation of ADTree'''
+    with open(mit_filename) as f:
+        mitigations = json.load(f)
+        for resource in mitigations:
+            for threat in mitigations[resource]:
+                create_ad_tree(resource,threat)    
+
+    # with open(mit_filename) as f:
+    #     mitigations = json.load(f)
+    #     print(mitigations)
+
 
 
 def get_threats_from_json(dir: str) -> list:
@@ -89,6 +99,96 @@ def get_remediations_from_json(dir: str) -> list:
     return rem_list
 
 '''Helpers'''
+
+
+def create_ad_tree(resource_name: str,threat_name: str) -> None:
+    lst = threat_name.split(',')
+    
+    threat = lst[1]
+    threat_id = lst[0]
+    mit = lst[2]
+
+    if int(threat_id) == 10:
+        dot = pydot.Dot(graph_type='digraph', rankdir = 'TB')
+        dot.obj_dict['attributes']['label'] = f'ADTree for resource: {resource_name} and threat: {threat}'
+        
+        dot.obj_dict['attributes']['labelloc'] = 't'
+        #Create first node which is what the attacker wants to do
+        root = pydot.Node(f'Attacker Goal {threat}', shape='box')
+        dot.add_node(root)
+        #2 lvl
+        attack = pydot.Node(f'Spoofing identity of legit user', shape='box')
+        dot.add_node(attack)
+        dot.add_edge(pydot.Edge(root,attack))
+        attack2 = pydot.Node(f'Elevating priveleges of lowlevel user', shape='box')
+        dot.add_node(attack2)
+        dot.add_edge(pydot.Edge(root,attack2))
+        dot.write_png(f'artifacts/atd/{threat.replace("/","_")}_{resource_name}_atd.png')
+    elif int(threat_id) == 9:
+        
+        dot = pydot.Dot(graph_type='digraph', rankdir = 'TB')
+        dot.obj_dict['attributes']['label'] = f'ADTree for resource: {resource_name} and threat: {threat}'
+        dot.obj_dict['attributes']['labelloc'] = 't'
+        #Create first node which is what the attacker wants to do
+        root = pydot.Node(f'{threat}', shape='box')
+        dot.add_node(root)
+        # 2 lvl
+        attack = pydot.Node(f'No IP allowlisting', shape='box')
+        dot.add_node(attack)
+        dot.add_edge(pydot.Edge(root,attack))
+        attack2 = pydot.Node('Container overtake', shape='box')
+        dot.add_node(attack2)
+        dot.add_edge(pydot.Edge(root,attack2))
+        attack3 = pydot.Node('Misunderstood SRM', shape='box')
+        dot.add_node(attack3)
+        dot.add_edge(pydot.Edge(root,attack3))
+        #3 lvl 
+        attack4 = pydot.Node('No network isolation', shape='box')
+        dot.add_node(attack4)
+        dot.add_edge(pydot.Edge(attack,attack4))
+        attack5 = pydot.Node('Vulnerable container image', shape='box')
+        dot.add_node(attack5)
+        dot.add_edge(pydot.Edge(attack2,attack5))
+        attack6 = pydot.Node('Container running as root', shape='box')
+        dot.add_node(attack6)
+        dot.add_edge(pydot.Edge(attack2,attack6))
+        attack7 = pydot.Node('Vulnerable Runtime', shape='box')
+        dot.add_node(attack7)
+        dot.add_edge(pydot.Edge(attack3,attack7))
+        attack8 = pydot.Node('Overpriveleged role for resource', shape='box')
+        dot.add_node(attack8)
+        dot.add_edge(pydot.Edge(attack3,attack8))
+        
+        dot.write_png(f'artifacts/atd/{threat.replace("/","_")}_{resource_name}_atd.png')
+    elif int(threat_id) == 8:
+        dot = pydot.Dot(graph_type='digraph', rankdir = 'TB')
+        dot.obj_dict['attributes']['label'] = f'ADTree for resource: {resource_name} and threat: {threat}'
+        dot.obj_dict['attributes']['labelloc'] = 't'
+        #Create first node which is what the attacker wants to do
+        root = pydot.Node(f'{threat}', shape='box')
+        dot.add_node(root)
+         #2 lvl
+        attack = pydot.Node(f'Spoofing identity of legit user', shape='box')
+        dot.add_node(attack)
+        dot.add_edge(pydot.Edge(root,attack))
+        attack2 = pydot.Node(f'Elevating priveleges of lowlevel user', shape='box')
+        dot.add_node(attack2)
+        dot.add_edge(pydot.Edge(root,attack2))
+        #3 lvl
+        attack3 = pydot.Node(f'Brute force password', shape='box')
+        dot.add_node(attack3)
+        dot.add_edge(pydot.Edge(attack,attack3))
+        attack4 = pydot.Node(f'Phishing', shape='box')
+        dot.add_node(attack4)
+        dot.add_edge(pydot.Edge(attack,attack4))
+        attack5 = pydot.Node(f'Bypass access control', shape='box')
+        dot.add_node(attack5)
+        dot.add_edge(pydot.Edge(attack2,attack5))
+        dot.write_png(f'artifacts/atd/{threat.replace("/","_")}_{resource_name}_atd.png')
+    else:
+        return
+
+    
 
 
 def generate_resource_threats(resource: Resource, threats: list, tm: dict) -> None:
