@@ -22,7 +22,10 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: private_cloud_objectstorage
-  
+        - Key: public
+        - Key: data_processing #not really true, but it does serve content
+          Value: "True"
+
   CloudFrontOriginId:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
@@ -75,6 +78,8 @@ Resources:
           Value: WebS3Bucket
         - Key: data_flow_source
           Value: Web-Clients
+        - Key: public
+          Value: "True"
   
   apiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -136,6 +141,8 @@ Resources:
           Value: private_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          Value: "True"
 
 
   OrderNonPrescriptionPharma:
@@ -176,6 +183,8 @@ Resources:
           Value: private_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          Value: "True"
   
   VerifyOrders:
     Type: 'AWS::Lambda::Function'
@@ -215,6 +224,8 @@ Resources:
           Value: private_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          Value: "True"
     
   AddOrDeleteEmployee:
     Type: 'AWS::Lambda::Function'
@@ -254,6 +265,8 @@ Resources:
           Value: private_employee_logic_zone
         - Key: data_flow
           Value: OPv2EmployeeDB
+        - Key: data_processing
+          Value: "True"
 
   LogisticsFunction:
     Type: 'AWS::Lambda::Function'
@@ -293,6 +306,8 @@ Resources:
           Value: private_operations_logic_zone
         - Key: data_flow
           Value: OPv2DB
+        - Key: data_processing
+          Value: "True"
         - Key: data_flow_sink
           Value: ExternalAPI
 
@@ -357,6 +372,8 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: private_order_cloud
+        - Key: datastore
+          Value: "True"
 
   OPv2EmployeeDB:
     Type: AWS::DynamoDB::Table
@@ -371,3 +388,5 @@ Resources:
       Tags:
         - Key: trust-boundary
           Value: private_employee_cloud
+        - Key: datastore
+          Value: "True"

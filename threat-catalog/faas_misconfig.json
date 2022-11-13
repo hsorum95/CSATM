@@ -1,6 +1,6 @@
 {
     "id":9,
-    "name":"Miscnfiguration & Exploitation of Serverless & Container Workloads",
+    "name":"Misconfiguration & Exploitation of Serverless & Container Workloads",
     "stride":[
        "Tampering",
        "Non_Repudiation",
@@ -8,6 +8,7 @@
        "DoS",
        "Elevation_of_Privilege"
     ],
+    "type":"Resource",
     "description":"str",
     "impact":7.1
  }

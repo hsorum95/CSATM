@@ -6,6 +6,7 @@
        "Information_Disclosure",
        "Elevation_of_Privilege"
     ],
+    "type":"External",
     "description":"Third party resources used in the system with vulnerabilites or flaws",
     "impact":7.21
  }

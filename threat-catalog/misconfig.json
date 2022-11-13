@@ -9,6 +9,7 @@
        "DoS",
        "Elevation_of_Privilege"
     ],
+    "type":"Resource",
     "description":"str",
     "impact":7.42
  }
