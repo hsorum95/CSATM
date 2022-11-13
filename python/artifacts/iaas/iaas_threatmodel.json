@@ -1,35 +1,42 @@
 {
     "publicALB": [
-        "8, Accidental Cloud Data Disclosure/ Disclosure",
+        "8, Accidental Cloud Data Disclosure/Disclosure",
         "9, Misconfiguration & Exploitation of Serverless & Container Workloads",
         "1, Insufficient ID, Credential, Access and Key Mgt, Privileged Accounts",
-        "3, Misconfiguration and Inadequate Change Control"
+        "3, Misconfiguration and Inadequate Change Control",
+        "10, Cloud Storage Data Exfiltration"
     ],
     "frontEndASG": [
-        "8, Accidental Cloud Data Disclosure/ Disclosure",
+        "8, Accidental Cloud Data Disclosure/Disclosure",
+        "9, Misconfiguration & Exploitation of Serverless & Container Workloads",
         "1, Insufficient ID, Credential, Access and Key Mgt, Privileged Accounts",
         "3, Misconfiguration and Inadequate Change Control",
+        "10, Cloud Storage Data Exfiltration",
         "7, System Vulnerabilities",
         "5, Insecure Software Development"
     ],
     "backEndASG": [
-        "8, Accidental Cloud Data Disclosure/ Disclosure",
+        "8, Accidental Cloud Data Disclosure/Disclosure",
+        "9, Misconfiguration & Exploitation of Serverless & Container Workloads",
         "1, Insufficient ID, Credential, Access and Key Mgt, Privileged Accounts",
         "3, Misconfiguration and Inadequate Change Control",
+        "10, Cloud Storage Data Exfiltration",
         "7, System Vulnerabilities",
         "5, Insecure Software Development"
     ],
     "myRDSCluster": [
-        "8, Accidental Cloud Data Disclosure/ Disclosure",
+        "8, Accidental Cloud Data Disclosure/Disclosure",
         "9, Misconfiguration & Exploitation of Serverless & Container Workloads",
         "3, Misconfiguration and Inadequate Change Control"
     ],
     "Web-Clients": [
         "2, Insecure Interfaces and APIs",
-        "6, Unsecure Third Party Resources"
+        "6, Unsecure Third Party Resources",
+        "10, Cloud Storage Data Exfiltration"
     ],
     "ExternalAPI": [
         "2, Insecure Interfaces and APIs",
-        "6, Unsecure Third Party Resources"
+        "6, Unsecure Third Party Resources",
+        "10, Cloud Storage Data Exfiltration"
     ]
 }
