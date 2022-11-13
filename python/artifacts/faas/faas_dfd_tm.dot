@@ -1,0 +1,72 @@
+strict digraph G {
+label="Data-flow diagram for /home/hsorum95/CSATM/cloudformation/faas.yml";
+labelloc=t;
+rankdir=LR;
+subgraph cluster_private_cloud_objectstorage {
+label="Trust boundary: private_cloud_objectstorage";
+shape=box;
+WebS3Bucket [label="Name: WebS3Bucket\nAWS resource type: AWS::S3::Bucket", shape=box];
+}
+
+subgraph cluster_public_facing_cloud {
+label="Trust boundary: public_facing_cloud";
+shape=box;
+publicCDNDistribution [label="Name: publicCDNDistribution\nAWS resource type: AWS::CloudFront::Distribution", shape=box];
+apiGateway [label="Name: apiGateway\nAWS resource type: AWS::ApiGateway::RestApi", shape=box];
+}
+
+subgraph cluster_private_logic_zone {
+label="Trust boundary: private_logic_zone";
+shape=box;
+OrderPrescriptionPharma [label="Name: OrderPrescriptionPharma\nAWS resource type: AWS::Lambda::Function", shape=box];
+OrderNonPrescriptionPharma [label="Name: OrderNonPrescriptionPharma\nAWS resource type: AWS::Lambda::Function", shape=box];
+VerifyOrders [label="Name: VerifyOrders\nAWS resource type: AWS::Lambda::Function", shape=box];
+}
+
+subgraph cluster_private_employee_logic_zone {
+label="Trust boundary: private_employee_logic_zone";
+shape=box;
+AddOrDeleteEmployee [label="Name: AddOrDeleteEmployee\nAWS resource type: AWS::Lambda::Function", shape=box];
+}
+
+subgraph cluster_private_operations_logic_zone {
+label="Trust boundary: private_operations_logic_zone";
+shape=box;
+LogisticsFunction [label="Name: LogisticsFunction\nAWS resource type: AWS::Lambda::Function", shape=box];
+}
+
+subgraph cluster_private_order_cloud {
+label="Trust boundary: private_order_cloud";
+shape=box;
+OPv2DB [label="Name: OPv2DB\nAWS resource type: AWS::DynamoDB::Table", shape=box];
+}
+
+subgraph cluster_private_employee_cloud {
+label="Trust boundary: private_employee_cloud";
+shape=box;
+OPv2EmployeeDB [label="Name: OPv2EmployeeDB\nAWS resource type: AWS::DynamoDB::Table", shape=box];
+}
+
+subgraph cluster_External {
+label="Trust boundary: External";
+shape=box;
+"Web-Clients" [label="Name: Web-Clients\nAWS resource type: External", shape=box];
+ExternalAPI [label="Name: ExternalAPI\nAWS resource type: External", shape=box];
+}
+
+publicCDNDistribution -> WebS3Bucket  [label="Dataflow\n from publicCDNDistribution to WebS3Bucket\n Crosses Trust Boundary"];
+"Web-Clients" -> publicCDNDistribution  [label="Dataflow\n from Web-Clients to publicCDNDistribution\n Crosses Trust Boundary"];
+apiGateway -> OrderPrescriptionPharma  [label="Dataflow\n from apiGateway to OrderPrescriptionPharma\n Crosses Trust Boundary"];
+apiGateway -> OrderNonPrescriptionPharma  [label="Dataflow\n from apiGateway to OrderNonPrescriptionPharma\n Crosses Trust Boundary"];
+apiGateway -> VerifyOrders  [label="Dataflow\n from apiGateway to VerifyOrders\n Crosses Trust Boundary"];
+apiGateway -> AddOrDeleteEmployee  [label="Dataflow\n from apiGateway to AddOrDeleteEmployee\n Crosses Trust Boundary"];
+"Web-Clients" -> apiGateway  [label="Dataflow\n from Web-Clients to apiGateway\n Crosses Trust Boundary"];
+OrderPrescriptionPharma -> OPv2DB  [label="Dataflow\n from OrderPrescriptionPharma to OPv2DB\n Crosses Trust Boundary"];
+OrderNonPrescriptionPharma -> OPv2DB  [label="Dataflow\n from OrderNonPrescriptionPharma to OPv2DB\n Crosses Trust Boundary"];
+VerifyOrders -> OPv2DB  [label="Dataflow\n from VerifyOrders to OPv2DB\n Crosses Trust Boundary"];
+AddOrDeleteEmployee -> OPv2EmployeeDB  [label="Dataflow\n from AddOrDeleteEmployee to OPv2EmployeeDB\n Crosses Trust Boundary"];
+LogisticsFunction -> OPv2DB  [label="Dataflow\n from LogisticsFunction to OPv2DB\n Crosses Trust Boundary"];
+LogisticsFunction -> ExternalAPI  [label="Dataflow\n from LogisticsFunction to ExternalAPI\n Crosses Trust Boundary"];
+"Web-Clients" -> publicCDNDistribution  [label="Dataflow\n from Web-Clients to publicCDNDistribution\n Crosses Trust Boundary"];
+LogisticsFunction -> ExternalAPI  [label="Dataflow\n from LogisticsFunction to ExternalAPI\n Crosses Trust Boundary"];
+}

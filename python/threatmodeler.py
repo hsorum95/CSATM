@@ -114,7 +114,7 @@ def create_ad_tree(resource_name: str,threat_name: str) -> None:
         
         dot.obj_dict['attributes']['labelloc'] = 't'
         #Create first node which is what the attacker wants to do
-        root = pydot.Node(f'Attacker Goal {threat}', shape='box')
+        root = pydot.Node(f'{threat}', shape='box')
         dot.add_node(root)
         #2 lvl
         attack = pydot.Node(f'Spoofing identity of legit user', shape='box')

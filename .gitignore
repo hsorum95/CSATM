@@ -7,11 +7,7 @@ __pycache__/
 *.so
 
 # dont want dot or png
-*.png
-*.dot
 .vscode/
-*.txt
-threatmodel.json
 
 # Distribution / packaging
 .Python
