@@ -1,0 +1,96 @@
+Name: WebS3Bucket
+	Resource-type: AWS::S3::Bucket
+	Resource-TrustBoundary: private_cloud_objectstorage
+	DataFlows:
+	-   None
+Name: publicCDNDistribution
+	Resource-type: AWS::CloudFront::Distribution
+	Resource-TrustBoundary: public_facing_cloud
+	DataFlows:
+	-   Source: publicCDNDistribution
+		Destination: WebS3Bucket
+		DataSensitivity: Crosses Trust Boundary
+	-   Source: Web-Clients
+		Destination: publicCDNDistribution
+		DataSensitivity: Crosses Trust Boundary
+Name: apiGateway
+	Resource-type: AWS::ApiGateway::RestApi
+	Resource-TrustBoundary: public_facing_cloud
+	DataFlows:
+	-   Source: apiGateway
+		Destination: OrderPrescriptionPharma
+		DataSensitivity: Crosses Trust Boundary
+	-   Source: apiGateway
+		Destination: OrderNonPrescriptionPharma
+		DataSensitivity: Crosses Trust Boundary
+	-   Source: apiGateway
+		Destination: VerifyOrders
+		DataSensitivity: Crosses Trust Boundary
+	-   Source: apiGateway
+		Destination: AddOrDeleteEmployee
+		DataSensitivity: Crosses Trust Boundary
+	-   Source: Web-Clients
+		Destination: apiGateway
+		DataSensitivity: Crosses Trust Boundary
+Name: OrderPrescriptionPharma
+	Resource-type: AWS::Lambda::Function
+	Resource-TrustBoundary: private_logic_zone
+	DataFlows:
+	-   Source: OrderPrescriptionPharma
+		Destination: OPv2DB
+		DataSensitivity: Crosses Trust Boundary
+Name: OrderNonPrescriptionPharma
+	Resource-type: AWS::Lambda::Function
+	Resource-TrustBoundary: private_logic_zone
+	DataFlows:
+	-   Source: OrderNonPrescriptionPharma
+		Destination: OPv2DB
+		DataSensitivity: Crosses Trust Boundary
+Name: VerifyOrders
+	Resource-type: AWS::Lambda::Function
+	Resource-TrustBoundary: private_logic_zone
+	DataFlows:
+	-   Source: VerifyOrders
+		Destination: OPv2DB
+		DataSensitivity: Crosses Trust Boundary
+Name: AddOrDeleteEmployee
+	Resource-type: AWS::Lambda::Function
+	Resource-TrustBoundary: private_employee_logic_zone
+	DataFlows:
+	-   Source: AddOrDeleteEmployee
+		Destination: OPv2EmployeeDB
+		DataSensitivity: Crosses Trust Boundary
+Name: LogisticsFunction
+	Resource-type: AWS::Lambda::Function
+	Resource-TrustBoundary: private_operations_logic_zone
+	DataFlows:
+	-   Source: LogisticsFunction
+		Destination: OPv2DB
+		DataSensitivity: Crosses Trust Boundary
+	-   Source: LogisticsFunction
+		Destination: ExternalAPI
+		DataSensitivity: Crosses Trust Boundary
+Name: OPv2DB
+	Resource-type: AWS::DynamoDB::Table
+	Resource-TrustBoundary: private_order_cloud
+	DataFlows:
+	-   None
+Name: OPv2EmployeeDB
+	Resource-type: AWS::DynamoDB::Table
+	Resource-TrustBoundary: private_employee_cloud
+	DataFlows:
+	-   None
+Name: Web-Clients
+	Resource-type: External
+	Resource-TrustBoundary: External
+	DataFlows:
+	-   Source: Web-Clients
+		Destination: publicCDNDistribution
+		DataSensitivity: Crosses Trust Boundary
+Name: ExternalAPI
+	Resource-type: External
+	Resource-TrustBoundary: External
+	DataFlows:
+	-   Source: LogisticsFunction
+		Destination: ExternalAPI
+		DataSensitivity: Crosses Trust Boundary

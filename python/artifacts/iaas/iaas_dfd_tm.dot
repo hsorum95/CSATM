@@ -1,0 +1,34 @@
+strict digraph G {
+label="Data-flow diagram for /home/hsorum95/CSATM/cloudformation/three-tier-web-app.yml";
+labelloc=t;
+subgraph cluster_public_cloud_network {
+label="Trust boundary: public_cloud_network";
+shape=box;
+publicALB [label="Name: publicALB\nAWS resource type: AWS::ElasticLoadBalancingV2::LoadBalancer", shape=box];
+frontEndASG [label="Name: frontEndASG\nAWS resource type: AWS::AutoScaling::AutoScalingGroup", shape=box];
+}
+
+subgraph cluster_internal_cloud_network {
+label="Trust boundary: internal_cloud_network";
+shape=box;
+internalALB [label="Name: internalALB\nAWS resource type: AWS::ElasticLoadBalancingV2::LoadBalancer", shape=box];
+backEndASG [label="Name: backEndASG\nAWS resource type: AWS::AutoScaling::AutoScalingGroup", shape=box];
+myRDSCluster [label="Name: myRDSCluster\nAWS resource type: AWS::RDS::DBInstance", shape=box];
+}
+
+subgraph cluster_External {
+label="Trust boundary: External";
+shape=box;
+"Web-Clients" [label="Name: Web-Clients\nAWS resource type: External", shape=box];
+ExternalAPI [label="Name: ExternalAPI\nAWS resource type: External", shape=box];
+}
+
+publicALB -> frontEndASG  [label="Dataflow\n from publicALB to frontEndASG\n In Trust Boundary"];
+"Web-Clients" -> publicALB  [label="Dataflow\n from Web-Clients to publicALB\n Crosses Trust Boundary"];
+internalALB -> backEndASG  [label="Dataflow\n from internalALB to backEndASG\n In Trust Boundary"];
+frontEndASG -> internalALB  [label="Dataflow\n from frontEndASG to internalALB\n Crosses Trust Boundary"];
+backEndASG -> myRDSCluster  [label="Dataflow\n from backEndASG to myRDSCluster\n In Trust Boundary"];
+backEndASG -> ExternalAPI  [label="Dataflow\n from backEndASG to ExternalAPI\n Crosses Trust Boundary"];
+"Web-Clients" -> publicALB  [label="Dataflow\n from Web-Clients to publicALB\n Crosses Trust Boundary"];
+backEndASG -> ExternalAPI  [label="Dataflow\n from backEndASG to ExternalAPI\n Crosses Trust Boundary"];
+}
